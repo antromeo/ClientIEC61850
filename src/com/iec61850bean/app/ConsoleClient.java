@@ -79,6 +79,7 @@ public class ConsoleClient {
         try {
 
             association = clientSap.associate(address, portParam.getValue(), null, new EventListener());
+            //association.getFile("model-file.icd");
 
         } catch (IOException e) {
             System.out.println("Unable to connect to remote host.");
