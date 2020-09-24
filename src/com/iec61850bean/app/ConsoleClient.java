@@ -3,6 +3,8 @@ package com.iec61850bean.app;
 import com.beanit.iec61850bean.*;
 import com.beanit.iec61850bean.internal.cli.*;
 
+import org.json.*;
+
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -10,7 +12,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ConsoleClient {
-
+    private static final String CONVERT_JSON = "j";
+    private static final String CONVERT_JSON_DESCRIPTION = "convert SCL to JSON";
     private static final String PRINT_MODEL_KEY = "m";
     private static final String PRINT_MODEL_KEY_DESCRIPTION = "print model";
     private static final String GET_DATA_VALUES_KEY = "g";
@@ -41,6 +44,7 @@ public class ConsoleClient {
     private static final ActionProcessor actionProcessor = new ActionProcessor(new ActionExecutor());
     private static volatile ClientAssociation association;
     private static ServerModel serverModel;
+
 
     public static void main(String[] args) {
         System.out.println("Working Directory = " + System.getProperty("user.dir"));
@@ -73,7 +77,9 @@ public class ConsoleClient {
         ClientSap clientSap = new ClientSap();
 
         try {
+
             association = clientSap.associate(address, portParam.getValue(), null, new EventListener());
+
         } catch (IOException e) {
             System.out.println("Unable to connect to remote host.");
             return;
@@ -94,7 +100,10 @@ public class ConsoleClient {
             System.out.println("reading model from file...");
 
             try {
+
+
                 serverModel = SclParser.parse(modelFileParam.getValue()).get(0);
+
             } catch (SclParseException e1) {
                 System.out.println("Error parsing SCL file: " + e1.getMessage());
                 return;
@@ -108,6 +117,7 @@ public class ConsoleClient {
             System.out.println("retrieving model...");
 
             try {
+
                 serverModel = association.retrieveModel();
             } catch (ServiceError e) {
                 System.out.println("Service error: " + e.getMessage());
@@ -119,6 +129,8 @@ public class ConsoleClient {
 
             System.out.println("successfully read model");
         }
+
+        actionProcessor.addAction(new Action(CONVERT_JSON, CONVERT_JSON_DESCRIPTION));
 
         actionProcessor.addAction(new Action(PRINT_MODEL_KEY, PRINT_MODEL_KEY_DESCRIPTION));
         actionProcessor.addAction(new Action(GET_DATA_VALUES_KEY, GET_DATA_VALUES_KEY_DESCRIPTION));
@@ -158,8 +170,13 @@ public class ConsoleClient {
         public void actionCalled(String actionKey) throws ActionException {
             try {
                 switch (actionKey) {
+                    case CONVERT_JSON:
+
+                        break;
                     case PRINT_MODEL_KEY:
+
                         System.out.println(serverModel);
+
                         break;
                     case READ_ALL_DATA_KEY:
                         System.out.print("Reading all data...");
