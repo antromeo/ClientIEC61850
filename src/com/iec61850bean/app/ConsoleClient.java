@@ -5,7 +5,7 @@ import com.beanit.iec61850bean.internal.cli.*;
 
 import org.json.*;
 
-import java.io.IOException;
+import java.io.*;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
@@ -77,12 +77,11 @@ public class ConsoleClient {
         ClientSap clientSap = new ClientSap();
 
         try {
-
             association = clientSap.associate(address, portParam.getValue(), null, new EventListener());
-            //association.getFile("model-file.icd");
+
 
         } catch (IOException e) {
-            System.out.println("Unable to connect to remote host.");
+            System.out.println("Unable to connect to remote host." );
             return;
         }
 
@@ -120,6 +119,7 @@ public class ConsoleClient {
             try {
 
                 serverModel = association.retrieveModel();
+
             } catch (ServiceError e) {
                 System.out.println("Service error: " + e.getMessage());
                 return;
@@ -131,9 +131,12 @@ public class ConsoleClient {
             System.out.println("successfully read model");
         }
 
-        actionProcessor.addAction(new Action(CONVERT_JSON, CONVERT_JSON_DESCRIPTION));
+
 
         actionProcessor.addAction(new Action(PRINT_MODEL_KEY, PRINT_MODEL_KEY_DESCRIPTION));
+
+        actionProcessor.addAction(new Action(CONVERT_JSON, CONVERT_JSON_DESCRIPTION));
+
         actionProcessor.addAction(new Action(GET_DATA_VALUES_KEY, GET_DATA_VALUES_KEY_DESCRIPTION));
         actionProcessor.addAction(new Action(READ_ALL_DATA_KEY, READ_ALL_DATA_KEY_DESCRIPTION));
         actionProcessor.addAction(new Action(CREATE_DATA_SET_KEY, CREATE_DATA_SET_KEY_DESCRIPTION));
@@ -171,14 +174,31 @@ public class ConsoleClient {
         public void actionCalled(String actionKey) throws ActionException {
             try {
                 switch (actionKey) {
-                    case CONVERT_JSON:
-
-                        break;
                     case PRINT_MODEL_KEY:
 
                         System.out.println(serverModel);
 
                         break;
+                    case CONVERT_JSON:
+                        String line, str = null;
+                        String link = "sample-model.icd";
+                        BufferedReader br = new BufferedReader(new FileReader(link));
+                        while ((line = br.readLine()) != null)
+                        {
+                            str+=line;
+                        }
+                        JSONObject jsondata = XML.toJSONObject(str);
+                        System.out.println(jsondata);
+                        FileWriter fileWriter =
+                                new FileWriter("sample-model.json");
+                        // Always wrap FileWriter in BufferedWriter.
+                        BufferedWriter bufferedWriter =
+                                new BufferedWriter(fileWriter);
+                        bufferedWriter.write(jsondata.toString(4));
+                        bufferedWriter.close();
+                        System.out.println("Conversione effettuata");
+                        break;
+
                     case READ_ALL_DATA_KEY:
                         System.out.print("Reading all data...");
                         try {

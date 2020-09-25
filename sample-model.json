@@ -1,0 +1,983 @@
+{"SCL": {
+    "xmlns": "http://www.iec.ch/61850/2003/SCL",
+    "DataTypeTemplates": {
+        "DAType": [
+            {
+                "id": "AnalogueValue_1",
+                "BDA": {
+                    "bType": "FLOAT32",
+                    "name": "f"
+                }
+            },
+            {
+                "id": "Vector_1",
+                "BDA": {
+                    "bType": "Struct",
+                    "name": "mag",
+                    "type": "AnalogueValue_1"
+                }
+            },
+            {
+                "id": "DPCSelectWithValue_1",
+                "BDA": [
+                    {
+                        "bType": "BOOLEAN",
+                        "name": "ctlVal"
+                    },
+                    {
+                        "bType": "Struct",
+                        "name": "origin",
+                        "type": "Originator_1"
+                    },
+                    {
+                        "bType": "INT8U",
+                        "name": "ctlNum"
+                    },
+                    {
+                        "bType": "Timestamp",
+                        "name": "T"
+                    },
+                    {
+                        "bType": "BOOLEAN",
+                        "name": "Test"
+                    },
+                    {
+                        "bType": "Check",
+                        "name": "Check"
+                    }
+                ]
+            },
+            {
+                "id": "Originator_1",
+                "BDA": [
+                    {
+                        "bType": "Enum",
+                        "name": "orCat",
+                        "type": "OrCat"
+                    },
+                    {
+                        "bType": "Octet64",
+                        "name": "orIdent"
+                    }
+                ]
+            },
+            {
+                "id": "DPCOperate_1",
+                "BDA": [
+                    {
+                        "bType": "BOOLEAN",
+                        "name": "ctlVal"
+                    },
+                    {
+                        "bType": "Struct",
+                        "name": "origin",
+                        "type": "Originator_1"
+                    },
+                    {
+                        "bType": "INT8U",
+                        "name": "ctlNum"
+                    },
+                    {
+                        "bType": "Timestamp",
+                        "name": "T"
+                    },
+                    {
+                        "bType": "BOOLEAN",
+                        "name": "Test"
+                    },
+                    {
+                        "bType": "Check",
+                        "name": "Check"
+                    }
+                ]
+            },
+            {
+                "id": "DPCCancel_1",
+                "BDA": [
+                    {
+                        "bType": "BOOLEAN",
+                        "name": "ctlVal"
+                    },
+                    {
+                        "bType": "Struct",
+                        "name": "origin",
+                        "type": "Originator_1"
+                    },
+                    {
+                        "bType": "INT8U",
+                        "name": "ctlNum"
+                    },
+                    {
+                        "bType": "Timestamp",
+                        "name": "T"
+                    },
+                    {
+                        "bType": "BOOLEAN",
+                        "name": "Test"
+                    }
+                ]
+            }
+        ],
+        "LNodeType": [
+            {
+                "id": "LLN01",
+                "DO": [
+                    {
+                        "name": "Mod",
+                        "type": "INC_1_Mod"
+                    },
+                    {
+                        "name": "Beh",
+                        "type": "INS_1_Beh"
+                    },
+                    {
+                        "name": "Health",
+                        "type": "INS_1_Beh"
+                    },
+                    {
+                        "name": "NamPlt",
+                        "type": "LPL_1_NamPlt"
+                    }
+                ],
+                "lnClass": "LLN0"
+            },
+            {
+                "id": "LPHD1",
+                "DO": [
+                    {
+                        "name": "PhyNam",
+                        "type": "DPL_1_PhyNam"
+                    },
+                    {
+                        "name": "PhyHealth",
+                        "type": "INS_1_Beh"
+                    },
+                    {
+                        "name": "Proxy",
+                        "type": "SPS_1_Proxy"
+                    }
+                ],
+                "lnClass": "LPHD"
+            },
+            {
+                "id": "MMXU1",
+                "DO": [
+                    {
+                        "name": "Mod",
+                        "type": "INC_1_Mod"
+                    },
+                    {
+                        "name": "Beh",
+                        "type": "INS_1_Beh"
+                    },
+                    {
+                        "name": "Health",
+                        "type": "INS_1_Beh"
+                    },
+                    {
+                        "name": "NamPlt",
+                        "type": "LPL_2_NamPlt"
+                    },
+                    {
+                        "name": "TotW",
+                        "type": "MV_1_TotW"
+                    },
+                    {
+                        "name": "W",
+                        "type": "WYE_1_W"
+                    }
+                ],
+                "lnClass": "MMXU"
+            },
+            {
+                "id": "CSWI1",
+                "DO": [
+                    {
+                        "name": "Mod",
+                        "type": "INC_1_Mod"
+                    },
+                    {
+                        "name": "Beh",
+                        "type": "INS_1_Beh"
+                    },
+                    {
+                        "name": "Health",
+                        "type": "INS_1_Beh"
+                    },
+                    {
+                        "name": "NamPlt",
+                        "type": "LPL_2_NamPlt"
+                    },
+                    {
+                        "name": "Pos",
+                        "type": "DPC_1_Pos"
+                    },
+                    {
+                        "name": "PosA",
+                        "type": "DPC_2_PosA"
+                    },
+                    {
+                        "name": "PosB",
+                        "type": "DPC_1_PosB"
+                    },
+                    {
+                        "name": "PosC",
+                        "type": "DPC_1_PosA"
+                    }
+                ],
+                "lnClass": "CSWI",
+                "desc": "Switch controller"
+            },
+            {
+                "id": "DSCH1",
+                "DO": [
+                    {
+                        "name": "Mod",
+                        "type": "ENC_1_Mod"
+                    },
+                    {
+                        "name": "Beh",
+                        "type": "ENS_1_Beh"
+                    },
+                    {
+                        "name": "Health",
+                        "type": "ENS_1_Beh"
+                    },
+                    {
+                        "name": "NamPlt",
+                        "type": "LPL_2_NamPlt"
+                    },
+                    {
+                        "name": "SchdSt",
+                        "type": "INS_1_Beh"
+                    },
+                    {
+                        "name": "SchdId",
+                        "type": "ING_1_SchdId"
+                    },
+                    {
+                        "name": "SchdCat",
+                        "type": "ING_1_SchdId"
+                    },
+                    {
+                        "name": "SchdTyp",
+                        "type": "ING_1_SchdId"
+                    },
+                    {
+                        "name": "SchdAbsTm",
+                        "type": "SCA_1_SchdAbsTm"
+                    }
+                ],
+                "lnClass": "DSCH",
+                "desc": "DER energy and/or ancillary services schedule"
+            }
+        ],
+        "EnumType": [
+            {
+                "EnumVal": [
+                    {
+                        "ord": 0,
+                        "content": "status-only"
+                    },
+                    {
+                        "ord": 1,
+                        "content": "direct-with-normal-security"
+                    },
+                    {
+                        "ord": 2,
+                        "content": "sbo-with-normal-security"
+                    },
+                    {
+                        "ord": 3,
+                        "content": "direct-with-enhanced-security"
+                    },
+                    {
+                        "ord": 4,
+                        "content": "sbo-with-enhanced-security"
+                    }
+                ],
+                "id": "CtlModels"
+            },
+            {
+                "EnumVal": [
+                    {
+                        "ord": 0,
+                        "content": "not-supported"
+                    },
+                    {
+                        "ord": 1,
+                        "content": "bay-control"
+                    },
+                    {
+                        "ord": 2,
+                        "content": "station-control"
+                    },
+                    {
+                        "ord": 3,
+                        "content": "remote-control"
+                    },
+                    {
+                        "ord": 4,
+                        "content": "automatic-bay"
+                    },
+                    {
+                        "ord": 5,
+                        "content": "automatic-station"
+                    },
+                    {
+                        "ord": 6,
+                        "content": "automatic-remote"
+                    },
+                    {
+                        "ord": 7,
+                        "content": "maintenance"
+                    },
+                    {
+                        "ord": 8,
+                        "content": "process"
+                    }
+                ],
+                "id": "OrCat"
+            }
+        ],
+        "DOType": [
+            {
+                "cdc": "INC",
+                "id": "INC_1_Mod",
+                "DA": [
+                    {
+                        "bType": "Quality",
+                        "qchg": true,
+                        "name": "q",
+                        "fc": "ST"
+                    },
+                    {
+                        "bType": "Timestamp",
+                        "name": "t",
+                        "fc": "ST"
+                    },
+                    {
+                        "bType": "Enum",
+                        "name": "ctlModel",
+                        "type": "CtlModels",
+                        "fc": "CF"
+                    }
+                ]
+            },
+            {
+                "cdc": "INS",
+                "id": "INS_1_Beh",
+                "DA": [
+                    {
+                        "dchg": true,
+                        "bType": "INT32",
+                        "name": "stVal",
+                        "fc": "ST"
+                    },
+                    {
+                        "bType": "Quality",
+                        "qchg": true,
+                        "name": "q",
+                        "fc": "ST"
+                    },
+                    {
+                        "bType": "Timestamp",
+                        "name": "t",
+                        "fc": "ST"
+                    }
+                ]
+            },
+            {
+                "cdc": "LPL",
+                "id": "LPL_1_NamPlt",
+                "DA": [
+                    {
+                        "bType": "VisString255",
+                        "name": "vendor",
+                        "fc": "DC"
+                    },
+                    {
+                        "bType": "VisString255",
+                        "name": "swRev",
+                        "fc": "DC"
+                    },
+                    {
+                        "bType": "VisString255",
+                        "name": "d",
+                        "fc": "DC"
+                    },
+                    {
+                        "bType": "VisString255",
+                        "name": "configRev",
+                        "fc": "DC"
+                    },
+                    {
+                        "bType": "VisString255",
+                        "name": "ldNs",
+                        "fc": "EX"
+                    }
+                ]
+            },
+            {
+                "cdc": "DPL",
+                "id": "DPL_1_PhyNam",
+                "DA": {
+                    "bType": "VisString255",
+                    "name": "vendor",
+                    "fc": "DC"
+                }
+            },
+            {
+                "cdc": "SPS",
+                "id": "SPS_1_Proxy",
+                "DA": [
+                    {
+                        "dchg": true,
+                        "bType": "BOOLEAN",
+                        "name": "stVal",
+                        "fc": "ST"
+                    },
+                    {
+                        "bType": "Quality",
+                        "qchg": true,
+                        "name": "q",
+                        "fc": "ST"
+                    },
+                    {
+                        "bType": "Timestamp",
+                        "name": "t",
+                        "fc": "ST"
+                    }
+                ]
+            },
+            {
+                "cdc": "LPL",
+                "id": "LPL_2_NamPlt",
+                "DA": [
+                    {
+                        "bType": "VisString255",
+                        "name": "vendor",
+                        "fc": "DC"
+                    },
+                    {
+                        "bType": "VisString255",
+                        "name": "swRev",
+                        "fc": "DC"
+                    },
+                    {
+                        "bType": "VisString255",
+                        "name": "d",
+                        "fc": "DC"
+                    }
+                ]
+            },
+            {
+                "cdc": "MV",
+                "id": "MV_1_TotW",
+                "DA": [
+                    {
+                        "dchg": true,
+                        "bType": "Struct",
+                        "name": "mag",
+                        "dupd": true,
+                        "type": "AnalogueValue_1",
+                        "fc": "MX"
+                    },
+                    {
+                        "bType": "Quality",
+                        "qchg": true,
+                        "name": "q",
+                        "fc": "MX"
+                    },
+                    {
+                        "bType": "Timestamp",
+                        "name": "t",
+                        "fc": "MX"
+                    }
+                ]
+            },
+            {
+                "cdc": "WYE",
+                "id": "WYE_1_W",
+                "SDO": [
+                    {
+                        "name": "phsA",
+                        "type": "CMV_1_phsA"
+                    },
+                    {
+                        "name": "phsB",
+                        "type": "CMV_1_phsA"
+                    },
+                    {
+                        "name": "phsC",
+                        "type": "CMV_1_phsA"
+                    }
+                ]
+            },
+            {
+                "cdc": "CMV",
+                "id": "CMV_1_phsA",
+                "DA": [
+                    {
+                        "dchg": true,
+                        "bType": "Struct",
+                        "name": "cVal",
+                        "type": "Vector_1",
+                        "fc": "MX"
+                    },
+                    {
+                        "bType": "Quality",
+                        "qchg": true,
+                        "name": "q",
+                        "fc": "MX"
+                    },
+                    {
+                        "bType": "Timestamp",
+                        "name": "t",
+                        "fc": "MX"
+                    }
+                ]
+            },
+            {
+                "cdc": "DPC",
+                "id": "DPC_1_Pos",
+                "DA": [
+                    {
+                        "bType": "Struct",
+                        "name": "Oper",
+                        "type": "DPCSelectWithValue_1",
+                        "fc": "CO"
+                    },
+                    {
+                        "bType": "Quality",
+                        "qchg": true,
+                        "name": "q",
+                        "fc": "ST"
+                    },
+                    {
+                        "bType": "Timestamp",
+                        "name": "t",
+                        "fc": "ST"
+                    },
+                    {
+                        "bType": "Enum",
+                        "name": "ctlModel",
+                        "type": "CtlModels",
+                        "fc": "CF"
+                    }
+                ]
+            },
+            {
+                "cdc": "DPC",
+                "id": "DPC_2_PosA",
+                "DA": [
+                    {
+                        "bType": "Quality",
+                        "qchg": true,
+                        "name": "q",
+                        "fc": "ST"
+                    },
+                    {
+                        "bType": "Timestamp",
+                        "name": "t",
+                        "fc": "ST"
+                    },
+                    {
+                        "bType": "Enum",
+                        "name": "ctlModel",
+                        "type": "CtlModels",
+                        "fc": "CF"
+                    },
+                    {
+                        "bType": "INT32U",
+                        "name": "sboTimeout",
+                        "fc": "CF"
+                    },
+                    {
+                        "bType": "VisString64",
+                        "name": "SBO",
+                        "fc": "CO"
+                    },
+                    {
+                        "bType": "Struct",
+                        "name": "Oper",
+                        "type": "DPCOperate_1",
+                        "fc": "CO"
+                    },
+                    {
+                        "bType": "Struct",
+                        "name": "Cancel",
+                        "type": "DPCCancel_1",
+                        "fc": "CO"
+                    }
+                ]
+            },
+            {
+                "cdc": "DPC",
+                "id": "DPC_1_PosB",
+                "DA": [
+                    {
+                        "bType": "Quality",
+                        "qchg": true,
+                        "name": "q",
+                        "fc": "ST"
+                    },
+                    {
+                        "bType": "Timestamp",
+                        "name": "t",
+                        "fc": "ST"
+                    },
+                    {
+                        "bType": "Enum",
+                        "name": "ctlModel",
+                        "type": "CtlModels",
+                        "fc": "CF"
+                    },
+                    {
+                        "bType": "Struct",
+                        "name": "Oper",
+                        "type": "DPCOperate_1",
+                        "fc": "CO"
+                    },
+                    {
+                        "bType": "Struct",
+                        "name": "Cancel",
+                        "type": "DPCCancel_1",
+                        "fc": "CO"
+                    }
+                ]
+            },
+            {
+                "cdc": "DPC",
+                "id": "DPC_1_PosA",
+                "DA": [
+                    {
+                        "bType": "Quality",
+                        "qchg": true,
+                        "name": "q",
+                        "fc": "ST"
+                    },
+                    {
+                        "bType": "Timestamp",
+                        "name": "t",
+                        "fc": "ST"
+                    },
+                    {
+                        "bType": "Enum",
+                        "name": "ctlModel",
+                        "type": "CtlModels",
+                        "fc": "CF"
+                    },
+                    {
+                        "bType": "Struct",
+                        "name": "SBOw",
+                        "type": "DPCSelectWithValue_1",
+                        "fc": "CO"
+                    },
+                    {
+                        "bType": "Struct",
+                        "name": "Oper",
+                        "type": "DPCOperate_1",
+                        "fc": "CO"
+                    },
+                    {
+                        "bType": "Struct",
+                        "name": "Cancel",
+                        "type": "DPCCancel_1",
+                        "fc": "CO"
+                    }
+                ]
+            },
+            {
+                "cdc": "ENC",
+                "id": "ENC_1_Mod",
+                "DA": [
+                    {
+                        "bType": "Quality",
+                        "qchg": true,
+                        "name": "q",
+                        "fc": "ST"
+                    },
+                    {
+                        "bType": "Timestamp",
+                        "name": "t",
+                        "fc": "ST"
+                    },
+                    {
+                        "bType": "Enum",
+                        "name": "ctlModel",
+                        "type": "CtlModels",
+                        "fc": "CF"
+                    }
+                ]
+            },
+            {
+                "cdc": "ENS",
+                "id": "ENS_1_Beh",
+                "DA": [
+                    {
+                        "dchg": true,
+                        "bType": "INT32",
+                        "name": "stVal",
+                        "fc": "ST"
+                    },
+                    {
+                        "bType": "Quality",
+                        "qchg": true,
+                        "name": "q",
+                        "fc": "ST"
+                    },
+                    {
+                        "bType": "Timestamp",
+                        "name": "t",
+                        "fc": "ST"
+                    }
+                ]
+            },
+            {
+                "cdc": "ING",
+                "id": "ING_1_SchdId"
+            },
+            {
+                "cdc": "SCA",
+                "id": "SCA_1_SchdAbsTm",
+                "DA": {
+                    "dchg": true,
+                    "bType": "FLOAT32",
+                    "name": "val",
+                    "count": 24,
+                    "fc": "SP"
+                }
+            }
+        ]
+    },
+    "Header": {
+        "toolID": "Kalkitech SCL Manager",
+        "id": "",
+        "version": "4.0.2",
+        "nameStructure": "IEDName",
+        "revision": ""
+    },
+    "IED": {
+        "Services": {
+            "ConfLNs": {
+                "fixLnInst": true,
+                "fixPrefix": true
+            },
+            "DataSetDirectory": "",
+            "GetCBValues": "",
+            "ReadWrite": "",
+            "GSEDir": "",
+            "GetDirectory": "",
+            "GOOSE": {"max": 5},
+            "GetDataSetValue": "",
+            "TimerActivatedControl": "",
+            "DynAssociation": "",
+            "FileHandling": "",
+            "GetDataObjectDefinition": "",
+            "GSSE": {"max": 5}
+        },
+        "AccessPoint": {
+            "Server": {
+                "Authentication": "",
+                "LDevice": {
+                    "LN": [
+                        {
+                            "prefix": "",
+                            "inst": 1,
+                            "lnType": "LPHD1",
+                            "lnClass": "LPHD"
+                        },
+                        {
+                            "prefix": "",
+                            "inst": 1,
+                            "lnType": "MMXU1",
+                            "lnClass": "MMXU",
+                            "DOI": {
+                                "name": "Mod",
+                                "DAI": {
+                                    "Val": "status-only",
+                                    "name": "ctlModel"
+                                }
+                            }
+                        },
+                        {
+                            "prefix": "",
+                            "inst": 1,
+                            "lnType": "CSWI1",
+                            "lnClass": "CSWI",
+                            "DOI": [
+                                {
+                                    "name": "Mod",
+                                    "DAI": {
+                                        "Val": "status-only",
+                                        "name": "ctlModel"
+                                    }
+                                },
+                                {
+                                    "name": "Pos",
+                                    "DAI": {
+                                        "Val": "direct-with-normal-security",
+                                        "name": "ctlModel"
+                                    }
+                                },
+                                {
+                                    "name": "PosA",
+                                    "DAI": [
+                                        {
+                                            "Val": 1000,
+                                            "name": "sboTimeout"
+                                        },
+                                        {
+                                            "Val": "sbo-with-normal-security",
+                                            "name": "ctlModel"
+                                        }
+                                    ]
+                                },
+                                {
+                                    "name": "PosB",
+                                    "DAI": {
+                                        "Val": "direct-with-enhanced-security",
+                                        "name": "ctlModel"
+                                    }
+                                },
+                                {
+                                    "name": "PosC",
+                                    "DAI": {
+                                        "Val": "sbo-with-enhanced-security",
+                                        "name": "ctlModel"
+                                    }
+                                }
+                            ]
+                        },
+                        {
+                            "prefix": "",
+                            "inst": 1,
+                            "lnType": "DSCH1",
+                            "lnClass": "DSCH",
+                            "DOI": {
+                                "name": "Mod",
+                                "DAI": {
+                                    "Val": "status-only",
+                                    "name": "ctlModel"
+                                }
+                            }
+                        }
+                    ],
+                    "inst": "lDevice1",
+                    "LN0": {
+                        "DataSet": {
+                            "name": "dataset1",
+                            "FCDA": [
+                                {
+                                    "ldInst": "lDevice1",
+                                    "doName": "TotW",
+                                    "lnInst": 1,
+                                    "fc": "MX",
+                                    "lnClass": "MMXU"
+                                },
+                                {
+                                    "ldInst": "lDevice1",
+                                    "doName": "W.phsA",
+                                    "lnInst": 1,
+                                    "daName": "cVal.mag.f",
+                                    "fc": "MX",
+                                    "lnClass": "MMXU"
+                                }
+                            ],
+                            "desc": ""
+                        },
+                        "inst": "",
+                        "lnType": "LLN01",
+                        "lnClass": "LLN0",
+                        "ReportControl": [
+                            {
+                                "OptFields": {
+                                    "timeStamp": true,
+                                    "seqNum": true,
+                                    "reasonCode": true,
+                                    "bufOvfl": false,
+                                    "dataRef": false,
+                                    "dataSet": true,
+                                    "configRef": true,
+                                    "entryID": true
+                                },
+                                "TrgOps": {
+                                    "dchg": true,
+                                    "period": true,
+                                    "gi": true,
+                                    "qchg": true,
+                                    "dupd": true
+                                },
+                                "name": "urcb1",
+                                "datSet": "dataset1",
+                                "rptID": "urcb1",
+                                "RptEnabled": {"max": 3},
+                                "intgPd": 5000,
+                                "bufTime": 0,
+                                "confRev": 0
+                            },
+                            {
+                                "OptFields": "",
+                                "TrgOps": "",
+                                "name": "urcb2",
+                                "datSet": "dataset1",
+                                "intgPd": 0,
+                                "bufTime": 0,
+                                "confRev": 0
+                            }
+                        ],
+                        "DOI": {
+                            "name": "Mod",
+                            "DAI": {
+                                "Val": "status-only",
+                                "name": "ctlModel"
+                            }
+                        }
+                    }
+                }
+            },
+            "name": "accessPoint1"
+        },
+        "name": "ied1"
+    },
+    "Communication": {"SubNetwork": {
+        "name": "subnetwork1",
+        "Text": "Station bus",
+        "ConnectedAP": {
+            "Address": {"P": [
+                {
+                    "type": "IP",
+                    "content": "10.0.0.3"
+                },
+                {
+                    "type": "IP-SUBNET",
+                    "content": "255.255.255.0"
+                },
+                {
+                    "type": "IP-GATEWAY",
+                    "content": "10.0.0.101"
+                },
+                {
+                    "type": "OSI-TSEL",
+                    "content": "0001"
+                },
+                {
+                    "type": "OSI-PSEL",
+                    "content": "00000001"
+                },
+                {
+                    "type": "OSI-SSEL",
+                    "content": "0001"
+                }
+            ]},
+            "iedName": "ied1",
+            "apName": "accessPoint1"
+        },
+        "type": "8-MMS",
+        "BitRate": {
+            "unit": "b/s",
+            "content": 10
+        }
+    }}
+}}
