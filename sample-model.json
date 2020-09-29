@@ -1,0 +1,424 @@
+{"SCL": {
+    "xmlns": "http://www.iec.ch/61850/2003/SCL",
+    "DataTypeTemplates": {
+        "DAType": {
+            "id": "AnalogueValue_1",
+            "BDA": {
+                "bType": "FLOAT32",
+                "name": "f"
+            }
+        },
+        "LNodeType": [
+            {
+                "id": "LLN01",
+                "DO": [
+                    {
+                        "name": "Mod",
+                        "type": "INC_1_Mod"
+                    },
+                    {
+                        "name": "Beh",
+                        "type": "INS_1_Beh"
+                    },
+                    {
+                        "name": "Health",
+                        "type": "INS_1_Beh"
+                    },
+                    {
+                        "name": "NamPlt",
+                        "type": "LPL_1_NamPlt"
+                    }
+                ],
+                "lnClass": "LLN0",
+                "desc": "Logical node zero"
+            },
+            {
+                "id": "LPHD1",
+                "DO": [
+                    {
+                        "name": "PhyNam",
+                        "type": "DPL_1_PhyNam"
+                    },
+                    {
+                        "name": "PhyHealth",
+                        "type": "INS_1_Beh"
+                    },
+                    {
+                        "name": "Proxy",
+                        "type": "SPS_1_Proxy"
+                    }
+                ],
+                "lnClass": "LPHD",
+                "desc": "Physical device information"
+            },
+            {
+                "id": "GGIO1",
+                "DO": [
+                    {
+                        "name": "Mod",
+                        "type": "INC_1_Mod"
+                    },
+                    {
+                        "name": "Beh",
+                        "type": "INS_1_Beh"
+                    },
+                    {
+                        "name": "Health",
+                        "type": "INS_1_Beh"
+                    },
+                    {
+                        "name": "NamPlt",
+                        "type": "LPL_2_NamPlt"
+                    },
+                    {
+                        "name": "AnIn1",
+                        "type": "MV_1_AnIn1"
+                    },
+                    {
+                        "name": "AnIn2",
+                        "type": "MV_1_AnIn1"
+                    },
+                    {
+                        "name": "AnIn3",
+                        "type": "MV_1_AnIn1"
+                    },
+                    {
+                        "name": "AnIn4",
+                        "type": "MV_1_AnIn1"
+                    },
+                    {
+                        "name": "SPCSO1",
+                        "type": "SPC_1_SPCSO1"
+                    },
+                    {
+                        "name": "SPCSO2",
+                        "type": "SPC_1_SPCSO1"
+                    },
+                    {
+                        "name": "SPCSO3",
+                        "type": "SPC_1_SPCSO1"
+                    },
+                    {
+                        "name": "SPCSO4",
+                        "type": "SPC_1_SPCSO1"
+                    },
+                    {
+                        "name": "Ind1",
+                        "type": "SPS_1_Proxy"
+                    },
+                    {
+                        "name": "Ind2",
+                        "type": "SPS_1_Proxy"
+                    },
+                    {
+                        "name": "Ind3",
+                        "type": "SPS_1_Proxy"
+                    },
+                    {
+                        "name": "Ind4",
+                        "type": "SPS_1_Proxy"
+                    }
+                ],
+                "lnClass": "GGIO",
+                "desc": "Generic process I/O"
+            }
+        ],
+        "EnumType": {
+            "EnumVal": [
+                {
+                    "ord": 0,
+                    "content": "status-only"
+                },
+                {
+                    "ord": 1,
+                    "content": "direct-with-normal-security"
+                },
+                {
+                    "ord": 2,
+                    "content": "sbo-with-normal-security"
+                },
+                {
+                    "ord": 3,
+                    "content": "direct-with-enhanced-security"
+                },
+                {
+                    "ord": 4,
+                    "content": "sbo-with-enhanced-security"
+                }
+            ],
+            "id": "CtlModels"
+        },
+        "DOType": [
+            {
+                "cdc": "INC",
+                "id": "INC_1_Mod",
+                "DA": [
+                    {
+                        "bType": "Quality",
+                        "qchg": true,
+                        "name": "q",
+                        "fc": "ST"
+                    },
+                    {
+                        "bType": "Timestamp",
+                        "name": "t",
+                        "fc": "ST"
+                    },
+                    {
+                        "bType": "Enum",
+                        "name": "ctlModel",
+                        "type": "CtlModels",
+                        "fc": "CF"
+                    }
+                ]
+            },
+            {
+                "cdc": "INS",
+                "id": "INS_1_Beh",
+                "DA": [
+                    {
+                        "dchg": true,
+                        "bType": "INT32",
+                        "name": "stVal",
+                        "fc": "ST"
+                    },
+                    {
+                        "bType": "Quality",
+                        "qchg": true,
+                        "name": "q",
+                        "fc": "ST"
+                    },
+                    {
+                        "bType": "Timestamp",
+                        "name": "t",
+                        "fc": "ST"
+                    }
+                ]
+            },
+            {
+                "cdc": "LPL",
+                "id": "LPL_1_NamPlt",
+                "DA": [
+                    {
+                        "bType": "VisString255",
+                        "name": "vendor",
+                        "fc": "DC"
+                    },
+                    {
+                        "bType": "VisString255",
+                        "name": "swRev",
+                        "fc": "DC"
+                    },
+                    {
+                        "bType": "VisString255",
+                        "name": "d",
+                        "fc": "DC"
+                    },
+                    {
+                        "bType": "VisString255",
+                        "name": "configRev",
+                        "fc": "DC"
+                    },
+                    {
+                        "bType": "VisString255",
+                        "name": "ldNs",
+                        "fc": "EX"
+                    }
+                ]
+            },
+            {
+                "cdc": "DPL",
+                "id": "DPL_1_PhyNam",
+                "DA": {
+                    "bType": "VisString255",
+                    "name": "vendor",
+                    "fc": "DC"
+                }
+            },
+            {
+                "cdc": "SPS",
+                "id": "SPS_1_Proxy",
+                "DA": [
+                    {
+                        "dchg": true,
+                        "bType": "BOOLEAN",
+                        "name": "stVal",
+                        "fc": "ST"
+                    },
+                    {
+                        "bType": "Quality",
+                        "qchg": true,
+                        "name": "q",
+                        "fc": "ST"
+                    },
+                    {
+                        "bType": "Timestamp",
+                        "name": "t",
+                        "fc": "ST"
+                    }
+                ]
+            },
+            {
+                "cdc": "LPL",
+                "id": "LPL_2_NamPlt",
+                "DA": [
+                    {
+                        "bType": "VisString255",
+                        "name": "vendor",
+                        "fc": "DC"
+                    },
+                    {
+                        "bType": "VisString255",
+                        "name": "swRev",
+                        "fc": "DC"
+                    },
+                    {
+                        "bType": "VisString255",
+                        "name": "d",
+                        "fc": "DC"
+                    }
+                ]
+            },
+            {
+                "cdc": "MV",
+                "id": "MV_1_AnIn1",
+                "DA": [
+                    {
+                        "dchg": true,
+                        "bType": "Struct",
+                        "name": "mag",
+                        "type": "AnalogueValue_1",
+                        "fc": "MX"
+                    },
+                    {
+                        "bType": "Quality",
+                        "qchg": true,
+                        "name": "q",
+                        "fc": "MX"
+                    },
+                    {
+                        "bType": "Timestamp",
+                        "name": "t",
+                        "fc": "MX"
+                    }
+                ]
+            },
+            {
+                "cdc": "SPC",
+                "id": "SPC_1_SPCSO1",
+                "DA": [
+                    {
+                        "bType": "Quality",
+                        "qchg": true,
+                        "name": "q",
+                        "fc": "ST"
+                    },
+                    {
+                        "bType": "Timestamp",
+                        "name": "t",
+                        "fc": "ST"
+                    },
+                    {
+                        "bType": "Enum",
+                        "name": "ctlModel",
+                        "type": "CtlModels",
+                        "fc": "CF"
+                    }
+                ]
+            }
+        ]
+    },
+    "IED": {
+        "Services": {
+            "ConfLNs": {
+                "fixLnInst": true,
+                "fixPrefix": true
+            },
+            "DataSetDirectory": "",
+            "GetCBValues": "",
+            "ReadWrite": "",
+            "GSEDir": "",
+            "GetDirectory": "",
+            "GOOSE": {"max": 5},
+            "GetDataSetValue": "",
+            "TimerActivatedControl": "",
+            "DynAssociation": "",
+            "FileHandling": "",
+            "GetDataObjectDefinition": "",
+            "GSSE": {"max": 5}
+        },
+        "AccessPoint": {
+            "Server": {
+                "Authentication": "",
+                "LDevice": {
+                    "LN": [
+                        {
+                            "prefix": "",
+                            "inst": 1,
+                            "lnType": "LPHD1",
+                            "lnClass": "LPHD"
+                        },
+                        {
+                            "prefix": "",
+                            "inst": 1,
+                            "lnType": "GGIO1",
+                            "lnClass": "GGIO",
+                            "DOI": [
+                                {
+                                    "name": "Mod",
+                                    "DAI": {
+                                        "Val": "status-only",
+                                        "name": "ctlModel"
+                                    }
+                                },
+                                {
+                                    "name": "SPCSO1",
+                                    "DAI": {
+                                        "Val": "status-only",
+                                        "name": "ctlModel"
+                                    }
+                                },
+                                {
+                                    "name": "SPCSO2",
+                                    "DAI": {
+                                        "Val": "status-only",
+                                        "name": "ctlModel"
+                                    }
+                                },
+                                {
+                                    "name": "SPCSO3",
+                                    "DAI": {
+                                        "Val": "status-only",
+                                        "name": "ctlModel"
+                                    }
+                                },
+                                {
+                                    "name": "SPCSO4",
+                                    "DAI": {
+                                        "Val": "status-only",
+                                        "name": "ctlModel"
+                                    }
+                                }
+                            ]
+                        }
+                    ],
+                    "inst": "GenericIO",
+                    "LN0": {
+                        "inst": "",
+                        "lnType": "LLN01",
+                        "lnClass": "LLN0",
+                        "DOI": {
+                            "name": "Mod",
+                            "DAI": {
+                                "Val": "status-only",
+                                "name": "ctlModel"
+                            }
+                        }
+                    }
+                }
+            },
+            "name": "accessPoint1"
+        },
+        "name": "simpleIO"
+    }
+}}
