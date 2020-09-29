@@ -317,9 +317,9 @@ public class Client61850 {
                         /*LETTURA DA FILE SCL*/
                         String line = null;
                         String str = "";
-                        //String link = "sample-model.icd";
-                        System.out.println(modelFileParam.getName());
-                        String link = modelFileParam.getName();
+                        String link = "genericIO.icd";
+                        //System.out.println(modelFileParam.getName());
+                        //String link = modelFileParam.getName();
                         BufferedReader br = new BufferedReader(new FileReader(link));
                         while ((line = br.readLine()) != null) {
                             str += line;
