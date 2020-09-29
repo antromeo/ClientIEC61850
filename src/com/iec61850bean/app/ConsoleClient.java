@@ -31,7 +31,7 @@ public class ConsoleClient {
             new CliParameterBuilder("-h")
                     .setDescription("The IP/domain address of the server you want to access.")
                     .setMandatory()
-                    .buildStringParameter("host");
+                    .buildStringParameter("host", "127.0.0.1");
     private static final IntCliParameter portParam =
             new CliParameterBuilder("-p")
                     .setDescription("The port to connect to.")
@@ -40,7 +40,7 @@ public class ConsoleClient {
             new CliParameterBuilder("-m")
                     .setDescription(
                             "The file name of the SCL file to read the model from. If this parameter is omitted the model will be read from the server device after connection.")
-                    .buildStringParameter("model-file");
+                    .buildStringParameter("model-file", "C:\\Users\\Utente\\Desktop\\Server\\sample-model.icd");
     private static final ActionProcessor actionProcessor = new ActionProcessor(new ActionExecutor());
     private static volatile ClientAssociation association;
     private static ServerModel serverModel;
@@ -52,6 +52,12 @@ public class ConsoleClient {
         cliParameters.add(hostParam);
         cliParameters.add(portParam);
         cliParameters.add(modelFileParam);
+
+        System.out.println("hostParam: "+hostParam.getValue());
+        System.out.println("portParam: "+portParam.getValue());
+        System.out.println("modelFileParam: "+modelFileParam.getValue());
+
+
 
         CliParser cliParser =
                 new CliParser(
@@ -79,7 +85,6 @@ public class ConsoleClient {
         try {
 
             association = clientSap.associate(address, portParam.getValue(), null, new EventListener());
-            //association.getFile("model-file.icd");
 
         } catch (IOException e) {
             System.out.println("Unable to connect to remote host.");
@@ -97,6 +102,8 @@ public class ConsoleClient {
 
         System.out.println("successfully connected");
 
+        //qui la connessione è stata effettuata
+
         if (modelFileParam.isSelected()) {
             System.out.println("reading model from file...");
 
@@ -112,21 +119,23 @@ public class ConsoleClient {
 
             association.setServerModel(serverModel);
 
+
             System.out.println("successfully read model");
 
         } else {
             System.out.println("retrieving model...");
 
             try {
-
-                serverModel = association.retrieveModel();
-            } catch (ServiceError e) {
+                System.out.println("a: "+modelFileParam.getValue());
+                serverModel = SclParser.parse(modelFileParam.getValue()).get(0);
+                //serverModel = association.retrieveModel();
+            } catch (SclParseException e) {
                 System.out.println("Service error: " + e.getMessage());
                 return;
-            } catch (IOException e) {
+            } /*catch (IOException e) {
                 System.out.println("Fatal error: " + e.getMessage());
                 return;
-            }
+            }*/
 
             System.out.println("successfully read model");
         }
