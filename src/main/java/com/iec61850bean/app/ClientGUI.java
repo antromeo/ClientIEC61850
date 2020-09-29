@@ -1,4 +1,4 @@
-package com.iec61850bean.app;
+package main.java.com.iec61850bean.app;
 
 import com.beanit.iec61850bean.ClientAssociation;
 import com.beanit.iec61850bean.ClientSap;
