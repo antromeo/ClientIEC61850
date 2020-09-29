@@ -187,6 +187,7 @@ public class ConsoleClient {
                         {
                             str+=line;
                         }
+
                         JSONObject jsondata = XML.toJSONObject(str);
                         System.out.println(jsondata);
                         FileWriter fileWriter =
