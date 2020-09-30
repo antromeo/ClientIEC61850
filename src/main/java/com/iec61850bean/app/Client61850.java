@@ -3,6 +3,7 @@ package main.java.com.iec61850bean.app;
 import com.beanit.iec61850bean.*;
 import com.beanit.iec61850bean.internal.cli.*;
 
+import com.beanit.iec61850bean.internal.scl.DaType;
 import org.json.*;
 
 import java.io.*;
@@ -171,12 +172,18 @@ public class Client61850 {
     private static final Pattern TAG_REGEX_DOTYPES = Pattern.compile("<DOType(.+?)/DOType>", Pattern.DOTALL);
 
     private static final Pattern TAG_REGEX_DA = Pattern.compile("<DA(.+?)/>", Pattern.DOTALL);
+
+
     private static final Pattern TAG_REGEX_DATYPES = Pattern.compile("<DAType(.+?)/DAType>", Pattern.DOTALL);
 
     private static final Pattern TAG_REGEX_DATATYPETEMPLATES = Pattern
             .compile("<DataTypeTemplates>(.+?)</DataTypeTemplates>", Pattern.DOTALL);
 
     private static final Pattern TAG_REGEX_LNTYPE = Pattern.compile("<LNodeType(.+?)</LNodeType>", Pattern.DOTALL);
+
+    private static final Pattern TAG_REGEX_ENUMTYPE = Pattern.compile("<EnumType(.+?)</EnumType>", Pattern.DOTALL);
+    private static final Pattern TAG_REGEX_ENUMVAL = Pattern.compile("<EnumVal(.+?)</EnumVal>", Pattern.DOTALL);
+
 
     private static final ArrayList<String> topicDisponibili = new ArrayList<String>();
 
@@ -271,6 +278,8 @@ public class Client61850 {
         return tagValues;
     }
 
+
+
     private static ArrayList<String> getDATypes(final String str) {
         final ArrayList<String> tagValues = new ArrayList<String>();
         final Matcher matcher = TAG_REGEX_DATYPES.matcher(str);
@@ -279,6 +288,28 @@ public class Client61850 {
         }
         return tagValues;
     }
+
+    private static ArrayList<String> getEnumTypes(final String str) {
+        final ArrayList<String> tagValues = new ArrayList<String>();
+        final Matcher matcher = TAG_REGEX_ENUMTYPE.matcher(str);
+        while (matcher.find()) {
+            tagValues.add("<EnumType" + matcher.group(1) + "/EnumType>");
+        }
+        return tagValues;
+    }
+
+
+    private static ArrayList<String> getEnumVal(final String str) {
+        final ArrayList<String> tagValues = new ArrayList<String>();
+        final Matcher matcher = TAG_REGEX_ENUMVAL.matcher(str);
+        while (matcher.find()) {
+            tagValues.add("<EnumVal" + matcher.group(1) + "/EnumVal>");
+        }
+        return tagValues;
+    }
+
+
+
 
     private static class EventListener implements ClientEventListener {
 
@@ -347,6 +378,7 @@ public class Client61850 {
                         ArrayList<String> LNTypes = getLNTypeValues(dataTypeTemplates);
                         ArrayList<String> DOTypes = getDOTypes(dataTypeTemplates);
                         ArrayList<String> DATypes = getDATypes(dataTypeTemplates);
+                        ArrayList<String> EnumTypes = getEnumTypes(dataTypeTemplates);
 
                         //SI SCORRE LA LISTA DEI LOGICAL DEVICE PRECEDENTEMENTE INIZIALIZZATA ALLA RIGA 341
                         for (int i = 0; i < lDevices.size(); i++)
@@ -361,7 +393,31 @@ public class Client61850 {
 
                             JSONObject jsondataLN0 = XML.toJSONObject(ln0); //LA PARTE SCL RELATIVA AL NODO LOGICO ZERO LA CONVERTO IN UN OGGETTO JSON
                             lnType0 = jsondataLN0.getJSONObject("LN0").getString("lnType"); //DELL'OGGETTO JSON APPENA OTTENUTO RICAVO IL VALORE DELL'ATTRIBUTO lnType (IN QUESTO CASO SARA' LLN01)
+
+
+                            //Si Scorre la lista dei DAType
+                            for(int q=0; q< DATypes.size(); q++){
+                                    String dataObjectType = DATypes.get(q);
+
+                                    JSONObject jsonDAType = XML.toJSONObject(dataObjectType); //pezzo json da pubblicare sul topic
+                                    String idDAType = jsonDAType.getJSONObject("DAType").getString("id");
+
+                                    //crea funzione che prende jsonDAType.toString() e poi chiami .getBytes() dentro la funzione
+
+                                    String publishTopic = pubTopic+idDAType;
+
+
+                                    MqttMessage messageDA = new MqttMessage(jsonDAType.toString().getBytes());
+                                    messageDA.setQos(qos);
+                                    messageDA.setRetained(true);
+                                    sampleClient.publish(publishTopic, messageDA);
+
+                                    topicDisponibili.add(publishTopic);
+
+                            }
+
                             pubTopic = pubTopic + lnType0; //E LA CONCATENO AL TOPIC
+
 
                             /*NODO LOGICO ZERO*/
                             for (int q = 0; q < LNTypes.size(); q++) //SI SCORRE LA LISTA DEI <LNType ...></LNType>
@@ -577,6 +633,7 @@ public class Client61850 {
                                 }
                             }
                         }
+
                         for (int counter = 0; counter < topicDisponibili.size(); counter++) {
                             System.out.println(topicDisponibili.get(counter)+"\n");
                         }
