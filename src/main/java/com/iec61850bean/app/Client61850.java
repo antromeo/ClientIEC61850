@@ -364,7 +364,7 @@ public class Client61850 {
                                     MqttMessage messageLNType = new MqttMessage(jsondataLNType.toString().getBytes());
                                     messageLNType.setQos(qos);
                                     messageLNType.setRetained(true);
-                                    sampleClient.publish(pubTopic, messageLNType);
+                                    //sampleClient.publish(pubTopic, messageLNType);
                                     topicDisponibili.add(pubTopic);
                                     /*LA TIPIZZAZIONE DI QUESTO NODO LOGICO VERRA' PUBBLICATA SU QUESTO TOPIC*/
 
@@ -387,7 +387,7 @@ public class Client61850 {
                                         MqttMessage messageDO = new MqttMessage(jsondataDO.toString().getBytes());
                                         messageDO.setQos(qos);
                                         messageDO.setRetained(true);
-                                        sampleClient.publish(pubTopic, messageDO);
+                                        //sampleClient.publish(pubTopic, messageDO);
                                         topicDisponibili.add(pubTopic);
 
                                         //System.out.println(nameDO);
@@ -436,11 +436,9 @@ public class Client61850 {
                                                             MqttMessage messageDA = new MqttMessage(jsondataDAttribute.toString().getBytes());
                                                             messageDA.setQos(qos);
                                                             messageDA.setRetained(true);
-                                                            sampleClient.publish(pubTopic, messageDA);
+                                                            //sampleClient.publish(pubTopic, messageDA);
                                                             topicDisponibili.add(pubTopic);
                                                         }
-
-                                                        ;
 
                                                     }
 
@@ -469,7 +467,7 @@ public class Client61850 {
                                                         MqttMessage messageDA = new MqttMessage(jsondataDAttribute.toString().getBytes());
                                                         messageDA.setQos(qos);
                                                         messageDA.setRetained(true);
-                                                        sampleClient.publish(pubTopic, messageDA);
+                                                        //sampleClient.publish(pubTopic, messageDA);
                                                         topicDisponibili.add(pubTopic);
 
 
@@ -524,7 +522,7 @@ public class Client61850 {
                                                 MqttMessage messageLNType = new MqttMessage(jsondataLNType.toString().getBytes());
                                                 messageLNType.setQos(qos);
                                                 messageLNType.setRetained(true);
-                                                sampleClient.publish(pubTopic, messageLNType);
+                                                //sampleClient.publish(pubTopic, messageLNType);
                                                 topicDisponibili.add(pubTopic);
 
                                                 ArrayList<String> dataObjects = getDO(LNodeType);
@@ -545,7 +543,7 @@ public class Client61850 {
                                                     MqttMessage messageDO = new MqttMessage(jsondataDO.toString().getBytes());
                                                     messageDO.setQos(qos);
                                                     messageDO.setRetained(true);
-                                                    sampleClient.publish(pubTopic, messageDO);
+                                                    //sampleClient.publish(pubTopic, messageDO);
                                                     topicDisponibili.add(pubTopic);
 
                                                     ArrayList<String> DOTypes = getDOTypes(dataTypeTemplates);
@@ -618,7 +616,7 @@ public class Client61850 {
                                             MqttMessage messageLNType = new MqttMessage(jsondataLNType.toString().getBytes());
                                             messageLNType.setQos(qos);
                                             messageLNType.setRetained(true);
-                                            sampleClient.publish(pubTopic, messageLNType);
+                                            //sampleClient.publish(pubTopic, messageLNType);
                                             topicDisponibili.add(pubTopic);
 
                                             System.out.println(LNodeType+"\n");
@@ -638,7 +636,7 @@ public class Client61850 {
                                                 MqttMessage messageDO = new MqttMessage(jsondataDO.toString().getBytes());
                                                 messageDO.setQos(qos);
                                                 messageDO.setRetained(true);
-                                                sampleClient.publish(pubTopic, messageDO);
+                                                //sampleClient.publish(pubTopic, messageDO);
                                                 topicDisponibili.add(pubTopic);
 
                                                 System.out.println("DO: "+DataObject);
@@ -687,7 +685,7 @@ public class Client61850 {
                                                                     MqttMessage messageDA = new MqttMessage(jsondataDAttribute.toString().getBytes());
                                                                     messageDA.setQos(qos);
                                                                     messageDA.setRetained(true);
-                                                                    sampleClient.publish(pubTopic, messageDA);
+                                                                    //sampleClient.publish(pubTopic, messageDA);
                                                                     topicDisponibili.add(pubTopic);
                                                                 }
 
@@ -722,7 +720,7 @@ public class Client61850 {
                                                                 MqttMessage messageDA = new MqttMessage(jsondataDAttribute.toString().getBytes());
                                                                 messageDA.setQos(qos);
                                                                 messageDA.setRetained(true);
-                                                                sampleClient.publish(pubTopic, messageDA);
+                                                                //sampleClient.publish(pubTopic, messageDA);
                                                                 topicDisponibili.add(pubTopic);
 
 
