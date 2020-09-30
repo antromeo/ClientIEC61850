@@ -293,7 +293,7 @@ public class Client61850 {
         final ArrayList<String> tagValues = new ArrayList<String>();
         final Matcher matcher = TAG_REGEX_ENUMTYPE.matcher(str);
         while (matcher.find()) {
-            tagValues.add("<EnumType" + matcher.group(1) + "/EnumType>");
+            tagValues.add("<EnumType" + matcher.group(1) + "</EnumType>");
         }
         return tagValues;
     }
@@ -303,7 +303,7 @@ public class Client61850 {
         final ArrayList<String> tagValues = new ArrayList<String>();
         final Matcher matcher = TAG_REGEX_ENUMVAL.matcher(str);
         while (matcher.find()) {
-            tagValues.add("<EnumVal" + matcher.group(1) + "/EnumVal>");
+            tagValues.add("<EnumVal" + matcher.group(1) + "</EnumVal>");
         }
         return tagValues;
     }
@@ -397,9 +397,9 @@ public class Client61850 {
 
                             //Si Scorre la lista dei DAType
                             for(int q=0; q< DATypes.size(); q++){
-                                    String dataObjectType = DATypes.get(q);
+                                    String dAType = DATypes.get(q);
 
-                                    JSONObject jsonDAType = XML.toJSONObject(dataObjectType); //pezzo json da pubblicare sul topic
+                                    JSONObject jsonDAType = XML.toJSONObject(dAType); //pezzo json da pubblicare sul topic
                                     String idDAType = jsonDAType.getJSONObject("DAType").getString("id");
 
                                     //crea funzione che prende jsonDAType.toString() e poi chiami .getBytes() dentro la funzione
@@ -415,6 +415,22 @@ public class Client61850 {
                                     topicDisponibili.add(publishTopic);
 
                             }
+
+                            //Si scorre ogni EnumType
+                            for(int q=0; q<EnumTypes.size(); q++){
+                                String EnumType = EnumTypes.get(q);
+                                JSONObject jsondataEnumVal = XML.toJSONObject(EnumType);
+
+                                String idEnumType = jsondataEnumVal.getJSONObject("EnumType").getString("id");
+                                String publish2Topic = pubTopic+idEnumType;
+                                MqttMessage messageLNType = new MqttMessage(jsondataEnumVal.toString().getBytes());
+                                messageLNType.setQos(qos);
+                                messageLNType.setRetained(true);
+                                sampleClient.publish(publish2Topic, messageLNType);
+                                topicDisponibili.add(publish2Topic);
+
+                            }
+
 
                             pubTopic = pubTopic + lnType0; //E LA CONCATENO AL TOPIC
 
