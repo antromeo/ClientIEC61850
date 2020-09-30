@@ -171,6 +171,7 @@ public class Client61850 {
     private static final Pattern TAG_REGEX_DOTYPES = Pattern.compile("<DOType(.+?)/DOType>", Pattern.DOTALL);
 
     private static final Pattern TAG_REGEX_DA = Pattern.compile("<DA(.+?)/>", Pattern.DOTALL);
+    private static final Pattern TAG_REGEX_DATYPES = Pattern.compile("<DAType(.+?)/DAType>", Pattern.DOTALL);
 
     private static final Pattern TAG_REGEX_DATATYPETEMPLATES = Pattern
             .compile("<DataTypeTemplates>(.+?)</DataTypeTemplates>", Pattern.DOTALL);
@@ -179,6 +180,7 @@ public class Client61850 {
 
     private static final ArrayList<String> topicDisponibili = new ArrayList<String>();
 
+    /*QUESTE FUNZIONI VENGONO UTILIZZATE DAL CLIENT 61850 PER SELEZIONARE I PEZZI SCL DI INTERESSE*/
     private static String getIED(final String str) {
         final Matcher matcher = TAG_REGEX_IEDNAME.matcher(str);
         String iedName = "";
@@ -269,6 +271,15 @@ public class Client61850 {
         return tagValues;
     }
 
+    private static ArrayList<String> getDATypes(final String str) {
+        final ArrayList<String> tagValues = new ArrayList<String>();
+        final Matcher matcher = TAG_REGEX_DATYPES.matcher(str);
+        while (matcher.find()) {
+            tagValues.add("<DAType" + matcher.group(1) + "/DAType>");
+        }
+        return tagValues;
+    }
+
     private static class EventListener implements ClientEventListener {
 
         @Override
@@ -298,12 +309,10 @@ public class Client61850 {
             try {
                 switch (actionKey) {
                     case PRINT_MODEL_KEY:
-
                         System.out.println(serverModel);
-
                         break;
                     case CONVERT_JSON:
-                        /*DEFINIZIONE CLIENT MQTT*/
+                        /*DEFINIZIONE CLIENT MQTT LATO GATEWAY*/
                         int qos = 2;
                         String broker = "tcp://localhost:1883";
                         String clientId = "clientIEC61850";
@@ -314,100 +323,86 @@ public class Client61850 {
                         sampleClient.connect(connOpts);
                         /*FINE DEFINIZIONE CLIENT MQTT*/
 
-                        /*LETTURA DA FILE SCL*/
+                        /*QUI AVVIENE LA LETTURA DA FILE SCL*/
                         String line = null;
                         String str = "";
                         String link = "genericIO.icd";
-                        //System.out.println(modelFileParam.getName());
-                        //String link = modelFileParam.getName();
                         BufferedReader br = new BufferedReader(new FileReader(link));
                         while ((line = br.readLine()) != null) {
                             str += line;
                         }
                         /*FINE LETTURA FILE SCL*/
 
-                        /*OTTENGO IL NOME DELL'IED*/
+                        /*OTTENGO IL NOME DELL'IED DAL FILE SCL*/
                         String iedName = getIED(str);
                         pubTopic = iedName + "/";
 
-                        //Ottengo la lista dei logical device presenti nel file
+                        //OTTENGO LA LISTA DEI LOGICAL DEVICE PRESENTI NEL FILE SCL
                         ArrayList<String> lDevices = getLogicalDevice(str);
 
-                        //Ottengo la parte relativa al data type templates e la salvo in una stringa
+                        //OTTENGO LA PARTE RELATIVA AL DATA TYPE TEMPLATES E LA SALVO IN UNA STRINGA
                         String dataTypeTemplates = getDTTemplates(str);
 
+                        //IN DEGLI ARRAYLIST DI TIPO STRINGA SALVO GLI ELEMENTI DEL TIPO <LNType ...></LNType>, <DOType ...></DOType> e <DAType ...></DAType>
+                        ArrayList<String> LNTypes = getLNTypeValues(dataTypeTemplates);
+                        ArrayList<String> DOTypes = getDOTypes(dataTypeTemplates);
+                        ArrayList<String> DATypes = getDATypes(dataTypeTemplates);
+
+                        //SI SCORRE LA LISTA DEI LOGICAL DEVICE PRECEDENTEMENTE INIZIALIZZATA ALLA RIGA 341
                         for (int i = 0; i < lDevices.size(); i++)
-                        { //finisce alla riga 761 - è questa tutta la parte di traduzione per ogni logical device
+                        {
+                            logicalDevice = lDevices.get(i); //OTTENGO LA PARTE SCL DEL LOGICAL DEVICE CORRENTE
+                            String logicalDeviceName = getLogicalDeviceName(logicalDevice); //OTTENGO IL NOME DEL LOGICAL DEVICE CORRENTE
+                            pubTopic = pubTopic + logicalDeviceName + "/"; //E IL NOME DEL LOGICAL DEVICE CORRENTE LO CONCATENO ALLA STRINGA RELATIVA AL TOPIC
+                            //CHE CONTIENE GIA' IL NOME DELL'IED
 
-                            logicalDevice = lDevices.get(i); //estraggo la parte scl relativa al logical device
-                            String logicalDeviceName = getLogicalDeviceName(logicalDevice); //ottengo il nome
-                            pubTopic = pubTopic + logicalDeviceName + "/"; //e il nome del logical device lo aggiungo al topic
+                            String ln0 = getLogicalNodeZero(logicalDevice); //QUI SALVO LA PARTE SCL RELATIVA AL NODO LOGICO ZERO
+                            ArrayList<String> lNodes = getLogicalNodes(logicalDevice); //QUI SALVO LA PARTE SCL RELATIVA AGLI ALTRI NODI LOGICI
 
-                            String ln0 = getLogicalNodeZero(logicalDevice); //qui salvo la parte relativa al nodo logico zero
-                            ArrayList<String> lNodes = getLogicalNodes(logicalDevice); //qui salvo la parte scl relativa a tutti gli altri nodi logici
-
-                            JSONObject jsondataLN0 = XML.toJSONObject(ln0); //la parte scl relativa al nodo logico zero la converto in un oggetto json
-                            lnType0 = jsondataLN0.getJSONObject("LN0").getString("lnType"); //dell'oggetto json ottenuto, ottengo il valore di lnType
-                            pubTopic = pubTopic + lnType0; //e lo aggiungo al topic
-
-                            ArrayList<String> LNTypes = getLNTypeValues(str);
+                            JSONObject jsondataLN0 = XML.toJSONObject(ln0); //LA PARTE SCL RELATIVA AL NODO LOGICO ZERO LA CONVERTO IN UN OGGETTO JSON
+                            lnType0 = jsondataLN0.getJSONObject("LN0").getString("lnType"); //DELL'OGGETTO JSON APPENA OTTENUTO RICAVO IL VALORE DELL'ATTRIBUTO lnType (IN QUESTO CASO SARA' LLN01)
+                            pubTopic = pubTopic + lnType0; //E LA CONCATENO AL TOPIC
 
                             /*NODO LOGICO ZERO*/
-                            for (int q = 0; q < LNTypes.size(); q++)
+                            for (int q = 0; q < LNTypes.size(); q++) //SI SCORRE LA LISTA DEI <LNType ...></LNType>
                             {
-                                String LNodeType = LNTypes.get(q);
-                                JSONObject jsondataLNType = XML.toJSONObject(LNodeType);
-                                String id = jsondataLNType.getJSONObject("LNodeType").getString("id");
-                                if (id.equals(lnType0)) {
-                                    System.out.println(pubTopic);
-                                    System.out.println("JSON Payload: " + jsondataLNType);
-                                    MqttMessage messageLNType = new MqttMessage(jsondataLNType.toString().getBytes());
-                                    messageLNType.setQos(qos);
-                                    messageLNType.setRetained(true);
-                                    //sampleClient.publish(pubTopic, messageLNType);
+                                String LNodeType = LNTypes.get(q); //SI OTTIENE L'ELEMENTO SPECIFICO <LNType ...></LNType> DELL'ITERAZIONE CORRENTE
+                                JSONObject jsondataLNType = XML.toJSONObject(LNodeType); //L'ELEMENTO OTTENUTO VIENE CONVERTITO IN JSON
+                                String id = jsondataLNType.getJSONObject("LNodeType").getString("id"); //E DI QUESTO ELEMENTO JSON SI OTTIENE L'ID (ESEMPIO: <LNodeType id="LLN01"...>)
+                                if (id.equals(lnType0)) { //SE L'UGUAGLIANZA E' VERIFICATA, OSSIA SE LNodeType id="LLN01" == lnType0 (vedi riga 363)
+                                    MqttMessage messageLNType = new MqttMessage(jsondataLNType.toString().getBytes()); //VIENE CREATO UN NUOVO MESSAGGIO MQTT CHE PRENDE IN INGRESSO
+                                    messageLNType.setQos(qos);   //VIENE SETTATA LA QOS (IN QUESTO CASO 2)             //L'OGGETTO JSON DELLA RIGA 370 IN FORMATO STRINGA (LO PRENDE SOLO COSì)
+                                    messageLNType.setRetained(true); //VIENE SETTATO A RETAIN IN MODO CHE IL CLIENT MQTT ESTERNO POSSA OTTENERE I VALORI DI INTERESSE ANCHE SI CONNETTE IN UN SECONDO MOMENTO
+                                    sampleClient.publish(pubTopic, messageLNType); //E QUINDI LA TIPIZZAZIONE DI QUEL NODO VIENE PUBBLICATA SUL TOPIC DELLA RIGA 364
                                     topicDisponibili.add(pubTopic);
-                                    /*LA TIPIZZAZIONE DI QUESTO NODO LOGICO VERRA' PUBBLICATA SU QUESTO TOPIC*/
 
-                                    /*QUINDI SI PASSA AI DATA OBJECT*/
-                                    ArrayList<String> dataObjects = getDO(LNodeType);
-                                    for (int j = 0; j < dataObjects.size(); j++) {
-                                        //System.out.println(dataObjects.get(j)+"\n");
-                                        String DataObject = dataObjects.get(j);
-                                        JSONObject jsondataDO = XML.toJSONObject(DataObject);
-                                        //System.out.println("JSON Payload DO: "+jsondataDO);
+                                    //QUINDI SI PASSA AI DATA OBJECT
+                                    ArrayList<String> dataObjects = getDO(LNodeType); //SI PASSA L'ELEMENTO <LNType ...></LNType> OTTENUTO ALLA RIGA 369, PER SALVARE OGNI DATA OBJECT CONTENUTO AL SUO INTERNO IN UN ARRAY LIST
+                                    for (int j = 0; j < dataObjects.size(); j++) { //SI SCORRE QUEST'ARRAYLIST
+                                        String DataObject = dataObjects.get(j); //E SI OTTIENE IL DATA OBJECT <DO name=.../> RELATIVO ALL'ITERAZIONE CORRENTE
+                                        JSONObject jsondataDO = XML.toJSONObject(DataObject); //QUESTO PEZZO DI SCL <DO name=... type=/> VIENE CONVERTITO IN JSON
 
-                                        String nameDO = jsondataDO.getJSONObject("DO").getString("name");
-                                        String typeDO = jsondataDO.getJSONObject("DO").getString("type");
+                                        String nameDO = jsondataDO.getJSONObject("DO").getString("name"); //DI QUESTO DATA OBJECT VENGONO OTTENUTI IL name
+                                        String typeDO = jsondataDO.getJSONObject("DO").getString("type");//E IL type
 
-                                        pubTopic = iedName + "/" + logicalDeviceName + "/" + lnType0 + "." + nameDO;
-
-
-                                        System.out.println("pubTopic: " + pubTopic);
-                                        System.out.println("json payload data object: " + jsondataDO);
-                                        MqttMessage messageDO = new MqttMessage(jsondataDO.toString().getBytes());
-                                        messageDO.setQos(qos);
+                                        pubTopic = iedName + "/" + logicalDeviceName + "/" + lnType0 + "." + nameDO; //IL name VIENE USATO PER LA COSTRUZIONE DINAMICA DEL TOPIC
+                                                                                                                        //SU CUI PUBBLICARE IL DATA OBJECT CORRENTE
+                                        MqttMessage messageDO = new MqttMessage(jsondataDO.toString().getBytes()); //IL DATA OBJECT CONVERTITO IN JSON ALLA RIGA 383 VIENE QUINDI PASSATO
+                                        messageDO.setQos(qos);                                                     //IN UN NUOVO MESSAGGIO MQTT
                                         messageDO.setRetained(true);
-                                        //sampleClient.publish(pubTopic, messageDO);
+                                        sampleClient.publish(pubTopic, messageDO); //E PUBBLICATO ALLA RIGA 388
                                         topicDisponibili.add(pubTopic);
 
-                                        //System.out.println(nameDO);
-                                        //System.out.println(typeDO+"\n");
+                                        for (int y = 0; y < DOTypes.size(); y++) { //SUCCESSIVAMENTE SI SCORRE LA LISTA DEI <DOType ...></DOType> (SONO I PEZZI SCL DEI DOType)
+                                            String DataObjectTypes = DOTypes.get(y); //SI OTTIENE L'ELEMENTO DOType SCL RELATIVO ALL'ITERAZIONE CORRENTE
 
-                                        /*A questo punto si passa al data type templates e si ottengono i data object type*/
+                                            JSONObject jsondataDOTypes = XML.toJSONObject(DataObjectTypes); //  QUESTO ELEMENTO VIENE CONVERTITO IN JSON
 
-                                        /*Data object types con i rispettivi data attribute*/
-                                        ArrayList<String> DOTypes = getDOTypes(dataTypeTemplates);
-
-                                        for (int y = 0; y < DOTypes.size(); y++) {
-                                            //System.out.println("i: "+DOTypes.get(y)+"\n");
-
-                                            String DataObjectTypes = DOTypes.get(y);
-
-                                            JSONObject jsondataDOTypes = XML.toJSONObject(DataObjectTypes);
-
-                                            if (jsondataDOTypes.get("DOType") instanceof JSONArray) {
-
+                                            if (jsondataDOTypes.get("DOType") instanceof JSONArray) { //SE L'ELEMENTO OTTENUTO E' UN JSON ARRAY
+                                                                    //SCINDO L'ARRAY IN TANTI ELEMENTI PIU' SEMPLICI
                                                 JSONArray recs = jsondataDOTypes.getJSONArray("DOType");
+
+                                                System.out.println(recs);
 
                                                 for (int z = 0; z < recs.length(); z++) {
                                                     JSONObject rec = recs.getJSONObject(z);
@@ -418,72 +413,42 @@ public class Client61850 {
                                                     String idDO = jsonObject.getJSONObject("DOType").getString("id");
 
                                                     if (idDO.equals(typeDO)) {
-                                                        //pubTopic = pubTopic+"."+nameDO;
-                                                        System.out.println("JSON Payload DO Type 1: " + jsonObject);
-
 
                                                         ArrayList<String> DAttributes = getDA(DataObjectTypes);
 
                                                         for (int f = 0; f < DAttributes.size(); f++) {
-                                                            System.out.println("DA: " + DAttributes.get(f));
                                                             JSONObject jsondataDAttribute = XML.toJSONObject(DAttributes.get(f));
-                                                            System.out.println("jsonDataAttribute: " + jsondataDAttribute);
                                                             String nameDA = jsondataDAttribute.getJSONObject("DA").getString("name");
 
                                                             pubTopic = iedName + "/" + logicalDeviceName + "/" + lnType0 + "." + nameDO + "." + nameDA;
 
-                                                            System.out.println("pubTopic dopo DataAttribute: " + pubTopic);
                                                             MqttMessage messageDA = new MqttMessage(jsondataDAttribute.toString().getBytes());
                                                             messageDA.setQos(qos);
                                                             messageDA.setRetained(true);
-                                                            //sampleClient.publish(pubTopic, messageDA);
+                                                            sampleClient.publish(pubTopic, messageDA);
                                                             topicDisponibili.add(pubTopic);
                                                         }
-
                                                     }
-
-                                                    //pubTopic = iedName + "\\" + logicalDeviceName + "\\"+lnType0;
-
                                                 }
 
                                             } else {
-
+                                                //Del data object type ottenuto ricavo l'id
                                                 String idDO = jsondataDOTypes.getJSONObject("DOType").getString("id");
-                                                System.out.println("DOT: "+DataObjectTypes);
-                                                System.out.println(jsondataDOTypes);
-                                                if (idDO.equals(typeDO)) {
-
+                                                if (idDO.equals(typeDO)) { //e verifico l'uguaglianza
                                                     ArrayList<String> DAttributes = getDA(DataObjectTypes);
-
                                                     for (int f = 0; f < DAttributes.size(); f++) {
-                                                        System.out.println("DA: " + DAttributes.get(f));
                                                         JSONObject jsondataDAttribute = XML.toJSONObject(DAttributes.get(f));
-                                                        System.out.println("jsonDataAttribute: " + jsondataDAttribute);
                                                         String nameDA = jsondataDAttribute.getJSONObject("DA").getString("name");
 
                                                         pubTopic = iedName + "/" + logicalDeviceName + "/" + lnType0 + "." + nameDO + "." + nameDA;
 
-                                                        System.out.println("pubTopic dopo DataAttribute: " + pubTopic);
                                                         MqttMessage messageDA = new MqttMessage(jsondataDAttribute.toString().getBytes());
                                                         messageDA.setQos(qos);
                                                         messageDA.setRetained(true);
-                                                        //sampleClient.publish(pubTopic, messageDA);
+                                                        sampleClient.publish(pubTopic, messageDA);
                                                         topicDisponibili.add(pubTopic);
-
-
                                                     }
-                                                    //JSONArray DA = jsondataDOTypes.getJSONObject("DOType").getJSONArray("DA");
-                                                    //System.out.println("DA: "+DA);
-                                                    //pubTopic = iedName + "\\" + logicalDeviceName + "\\"+lnType0+"."+nameDO;
-                                                    //System.out.println(pubTopic);
-                                                    //MqttMessage messageDOType = new MqttMessage(jsondataDOTypes.toString().getBytes());
-                                                    //messageDOType.setQos(qos);
-                                                    //messageDOType.setRetained(true);
-                                                    //sampleClient.publish(pubTopic, messageDOType);
-                                                    //System.out.println("DOTYPE PUBBLICATO SU TOPIC: "+pubTopic+"\n");
-
                                                 }
-
                                             }
                                         }
                                     }
@@ -491,277 +456,131 @@ public class Client61850 {
                             }
 
                             /*ALTRI NODI LOGICI*/
-                            for (int j = 0; j < lNodes.size(); j++) {
-                                String logicalNode = lNodes.get(j);
+                            for (int q = 0; q < LNTypes.size(); q++) { // 1 <LNodeType id="LLN01" lnClass="LLN0"> .....
+                                String LNodeType = LNTypes.get(q); //Prendo il pezzo di <LNodeType dell'iterazione corrente
+                                JSONObject jsondataLNType = XML.toJSONObject(LNodeType);
 
-                                JSONObject jsondata = XML.toJSONObject(logicalNode);
+                                ArrayList<String> dataObject = getDO(LNodeType); //e glielo passo come parametro a questo metodo
+                                //per ottenere la lista di tutti i data object in esso contenuti
+                                String idLNType = jsondataLNType.getJSONObject("LNodeType").getString("id");
 
-                                if (jsondata.get("LN") instanceof JSONArray) {
+                                /*           String LNodeType = LNTypes.get(q);
+                                JSONObject jsondataLNType = XML.toJSONObject(LNodeType);
+                                String id = jsondataLNType.getJSONObject("LNodeType").getString("id");*/
+                                for (int j = 0; j < lNodes.size(); j++) { // <LN lnClass="LPHD" lnType="LPHD1" inst="1" prefix="" />
+                                    String logicalNode = lNodes.get(j);
 
-                                    JSONArray recs = jsondata.getJSONArray("LN");
+                                    JSONObject jsondataLN = XML.toJSONObject(logicalNode);
 
-                                    for (int k = 0; k < recs.length(); k++) {
-                                        JSONObject rec = recs.getJSONObject(k);
+                                    if (jsondataLN.get("LN") instanceof JSONArray) {
+                                        JSONArray jsonArrayLN = jsondataLN.getJSONArray("LN");
 
-                                        String jsonString = "{\"LN\":" + rec.toString() + "}";
-                                        JSONObject jsonObject = new JSONObject(jsonString);
+                                        for (int k = 0; k < jsonArrayLN.length(); k++) {
+                                            JSONObject jsonLN = jsonArrayLN.getJSONObject(k);
+                                            String jsonLNString = "{\"LN\":" + jsonLN.toString() + "}";
+                                            JSONObject jsonObjectLN = new JSONObject(jsonLNString);
 
-                                        pubTopic = iedName + "/" + logicalDeviceName + "/";
-                                        lnType = jsonObject.getJSONObject("LN").getString("lnType");
+                                            String lnType = jsonObjectLN.getJSONObject("LN").getString("lnType");
 
-                                        for (int q = 0; q < LNTypes.size(); q++) {
-                                            String LNodeType = LNTypes.get(q);
-                                            JSONObject jsondataLNType = XML.toJSONObject(LNodeType);
-                                            String id = jsondataLNType.getJSONObject("LNodeType").getString("id");
-                                            if (id.equals(lnType)) {
-                                                pubTopic = pubTopic + id;
-                                                System.out.println("JSON Payload 1: " + jsondataLNType);
-                                                System.out.println(pubTopic + "\n");
-                                                System.out.println(LNodeType+"\n");
+                                            if(idLNType.equals(lnType)) {
+                                                pubTopic = iedName + "/" + logicalDeviceName + "/" + lnType;
 
                                                 MqttMessage messageLNType = new MqttMessage(jsondataLNType.toString().getBytes());
                                                 messageLNType.setQos(qos);
                                                 messageLNType.setRetained(true);
-                                                //sampleClient.publish(pubTopic, messageLNType);
+                                                sampleClient.publish(pubTopic, messageLNType);
                                                 topicDisponibili.add(pubTopic);
 
-                                                ArrayList<String> dataObjects = getDO(LNodeType);
-                                                for (int l = 0; l < dataObjects.size(); l++) {
-                                                    String DataObject = dataObjects.get(l);
-                                                    JSONObject jsondataDO = XML.toJSONObject(DataObject);
 
-                                                    String nameDO = jsondataDO.getJSONObject("DO").getString("name");
-                                                    String typeDO = jsondataDO.getJSONObject("DO").getString("type");
+                                                for(int t = 0; t <dataObject.size(); t++) {
+                                                    JSONObject jsonDO = XML.toJSONObject(dataObject.get(t)); //pezzo json da pubblicare sul topic
+                                                    String doName = jsonDO.getJSONObject("DO").getString("name");
+                                                    String doType = jsonDO.getJSONObject("DO").getString("type");
 
-                                                    pubTopic = iedName + "/" + logicalDeviceName + "/" + lnType+"."+nameDO;
+                                                    pubTopic = iedName + "/" + logicalDeviceName + "/" + lnType+"."+doName;
 
-                                                    System.out.println("DO: "+DataObject);
-                                                    System.out.println(jsondataDO);
-                                                    System.out.println(pubTopic+"\n");
-                                                    System.out.println(nameDO);
-                                                    /*Manca la publish*/
-                                                    MqttMessage messageDO = new MqttMessage(jsondataDO.toString().getBytes());
+                                                    MqttMessage messageDO = new MqttMessage(jsonDO.toString().getBytes());
                                                     messageDO.setQos(qos);
                                                     messageDO.setRetained(true);
-                                                    //sampleClient.publish(pubTopic, messageDO);
+                                                    sampleClient.publish(pubTopic, messageDO);
+
                                                     topicDisponibili.add(pubTopic);
 
-                                                    ArrayList<String> DOTypes = getDOTypes(dataTypeTemplates);
+                                                    for(int ii = 0; ii<DOTypes.size(); ii++) {
+                                                        String dataObjectType = DOTypes.get(ii);
 
-                                                    for (int r = 0; r < DOTypes.size(); r++) {
+                                                        JSONObject jsonDOType = XML.toJSONObject(dataObjectType); //pezzo json da pubblicare sul topic
 
-                                                        String DataObjectTypes = DOTypes.get(r);
+                                                        String idDOType = jsonDOType.getJSONObject("DOType").getString("id");
 
-                                                        JSONObject jsondataDOTypes = XML.toJSONObject(DataObjectTypes);
 
-                                                        if (jsondataDOTypes.get("DOType") instanceof JSONArray) {
-                                                            JSONArray recs2 = jsondataDOTypes.getJSONArray("DOType");
-                                                            for (int z = 0; z < recs2.length(); z++) {
-                                                                JSONObject rec2 = recs2.getJSONObject(z);
+                                                        if(doType.equals(idDOType)) {
+                                                            ArrayList<String> dataAttribute = getDA(dataObjectType);
 
-                                                                String jsonString2 = "{\"DOType\":" + rec2.toString() + "}";
-                                                                JSONObject jsonObject2 = new JSONObject(jsonString2);
+                                                            for(int jj = 0; jj<dataAttribute.size(); jj++) {
+                                                                JSONObject jsonDA = XML.toJSONObject(dataAttribute.get(jj));
+                                                                String dataAttributeName = jsonDA.getJSONObject("DA").getString("name");
+                                                                pubTopic = iedName + "/" + logicalDeviceName + "/" + lnType+"."+doName+"."+dataAttributeName;
 
-                                                                System.out.println("jsonObject2: "+jsonObject2);
+                                                                MqttMessage messageDA = new MqttMessage(jsonDA.toString().getBytes());
+                                                                messageDA.setQos(qos);
+                                                                messageDA.setRetained(true);
+                                                                sampleClient.publish(pubTopic, messageDA);
 
-                                                                String idDO = jsonObject2.getJSONObject("DOType").getString("id");
-                                                                //String typeDO = jsonObject2.getJSONObject()
-                                                                if (idDO.equals(typeDO)) {
-                                                                    System.out.println("JSON Payload DO Type: " + jsonObject);
+                                                                topicDisponibili.add(pubTopic);
 
-                                                                    ArrayList<String> DAttributes = getDA(DataObjectTypes);
-
-                                                                    for (int f = 0; f < DAttributes.size(); f++) {
-                                                                        System.out.println("DA: " + DAttributes.get(f));
-                                                                        JSONObject jsondataDAttribute = XML.toJSONObject(DAttributes.get(f));
-                                                                        System.out.println("jsonDataAttribute: " + jsondataDAttribute);
-                                                                        String nameDA = jsondataDAttribute.getJSONObject("DA").getString("name");
-
-                                                                        pubTopic = iedName + "/" + logicalDeviceName + "/" + lnType + "." + nameDO + "." + nameDA;
-
-                                                                        System.out.println("pubTopic dopo DataAttribute 3: " + pubTopic+"\n\n\n");
-                                                                    }
-
-                                                                }
                                                             }
                                                         }
-                                                        else {
-
-                                                        }
                                                     }
-
-
                                                 }
-                                                //MqttMessage messageLNType = new MqttMessage(jsondataLNType.toString().getBytes());
-                                                //messageLNType.setQos(qos);
-                                                //messageLNType.setRetained(true);
-                                                //sampleClient.publish(pubTopic, messageLNType);
-                                                /*LA TIPIZZAZIONE DI QUESTO NODO LOGICO VERRA' PUBBLICATA SU QUESTO TOPIC*/
-
                                             }
                                         }
-                                    }
+                                    } else {
+                                        String lnType = jsondataLN.getJSONObject("LN").getString("lnType");
 
-                                } else {
-                                    lnType = jsondata.getJSONObject("LN").getString("lnType");
-
-                                    for (int q = 0; q < LNTypes.size(); q++) {
-                                        String LNodeType = LNTypes.get(q);
-                                        JSONObject jsondataLNType = XML.toJSONObject(LNodeType);
-                                        String id = jsondataLNType.getJSONObject("LNodeType").getString("id");
-                                        if (id.equals(lnType)) {
+                                        if(idLNType.equals(lnType)) {
                                             pubTopic = iedName + "/" + logicalDeviceName + "/" + lnType;
-                                            System.out.println("JSON Payload 2: " + jsondataLNType);
-                                            System.out.println(pubTopic + "\n");
+
                                             MqttMessage messageLNType = new MqttMessage(jsondataLNType.toString().getBytes());
                                             messageLNType.setQos(qos);
                                             messageLNType.setRetained(true);
-                                            //sampleClient.publish(pubTopic, messageLNType);
+                                            sampleClient.publish(pubTopic, messageLNType);
+
                                             topicDisponibili.add(pubTopic);
 
-                                            System.out.println(LNodeType+"\n");
-
-                                            ArrayList<String> dataObjects = getDO(LNodeType);
-                                            for (int l = 0; l < dataObjects.size(); l++) {
-                                                String DataObject = dataObjects.get(l);
-                                                JSONObject jsondataDO = XML.toJSONObject(DataObject);
-
-                                                String nameDO = jsondataDO.getJSONObject("DO").getString("name");
-                                                String typeDO = jsondataDO.getJSONObject("DO").getString("type");
-
-                                                pubTopic = iedName + "/" + logicalDeviceName + "/" + lnType+"."+nameDO;
-
-                                                System.out.println("pubTopic: " + pubTopic);
-                                                System.out.println("json payload data object: " + jsondataDO);
-                                                MqttMessage messageDO = new MqttMessage(jsondataDO.toString().getBytes());
-                                                messageDO.setQos(qos);
-                                                messageDO.setRetained(true);
-                                                //sampleClient.publish(pubTopic, messageDO);
+                                            for(int t = 0; t <dataObject.size(); t++) {
+                                                JSONObject jsonDO = XML.toJSONObject(dataObject.get(t)); //pezzo json da pubblicare sul topic
+                                                String doName = jsonDO.getJSONObject("DO").getString("name");
+                                                String doType = jsonDO.getJSONObject("DO").getString("type");
+                                                pubTopic = iedName + "/" + logicalDeviceName + "/" + lnType+"/"+doName;
                                                 topicDisponibili.add(pubTopic);
 
-                                                System.out.println("DO: "+DataObject);
-                                                System.out.println(jsondataDO);
-                                                System.out.println(pubTopic+"\n");
-                                                System.out.println(nameDO);
+                                                for(int ii = 0; ii<DOTypes.size(); ii++) {
+                                                    String dataObjectType = DOTypes.get(ii);
+                                                    JSONObject jsonDOType = XML.toJSONObject(dataObjectType); //pezzo json da pubblicare sul topic
+                                                    String idDOType = jsonDOType.getJSONObject("DOType").getString("id");
 
-                                                /*Data object types con i rispettivi data attribute*/
-                                                ArrayList<String> DOTypes = getDOTypes(dataTypeTemplates);
-
-                                                for (int r = 0; r < DOTypes.size(); r++) {
-
-                                                    String DataObjectTypes = DOTypes.get(r);
-
-                                                    JSONObject jsondataDOTypes = XML.toJSONObject(DataObjectTypes);
-
-                                                    if (jsondataDOTypes.get("DOType") instanceof JSONArray) {
-
-                                                        JSONArray recs = jsondataDOTypes.getJSONArray("DOType");
-
-                                                        for (int z = 0; z < recs.length(); z++) {
-                                                            JSONObject rec = recs.getJSONObject(z);
-
-                                                            String jsonString = "{\"DOType\":" + rec.toString() + "}";
-                                                            JSONObject jsonObject = new JSONObject(jsonString);
-
-                                                            String idDO = jsonObject.getJSONObject("DOType").getString("id");
-                                                            if (idDO.equals(typeDO)) {
-                                                                //pubTopic = pubTopic+"."+nameDO;
-                                                                System.out.println("JSON Payload DO Type 1: " + jsonObject);
-
-
-                                                                ArrayList<String> DAttributes = getDA(DataObjectTypes);
-
-
-
-                                                                for (int f = 0; f < DAttributes.size(); f++) {
-                                                                    System.out.println("DA: " + DAttributes.get(f));
-                                                                    JSONObject jsondataDAttribute = XML.toJSONObject(DAttributes.get(f));
-                                                                    System.out.println("jsonDataAttribute: " + jsondataDAttribute);
-                                                                    String nameDA = jsondataDAttribute.getJSONObject("DA").getString("name");
-
-                                                                    pubTopic = iedName + "/" + logicalDeviceName + "/" + lnType + "." + nameDO + "." + nameDA;
-
-                                                                    System.out.println("pubTopic dopo DataAttribute 1: " + pubTopic+"\n\n\n");
-                                                                    MqttMessage messageDA = new MqttMessage(jsondataDAttribute.toString().getBytes());
-                                                                    messageDA.setQos(qos);
-                                                                    messageDA.setRetained(true);
-                                                                    //sampleClient.publish(pubTopic, messageDA);
-                                                                    topicDisponibili.add(pubTopic);
-                                                                }
-
-                                                                ;
-
-                                                            }
-
-                                                            //pubTopic = iedName + "\\" + logicalDeviceName + "\\"+lnType0;
-
-                                                        }
-
-                                                    } else {
-
-                                                        ;
-                                                        //mi serve la parte dei data object
-                                                        //for
-                                                        String idDO = jsondataDOTypes.getJSONObject("DOType").getString("id");
-                                                        System.out.println("\n");
-                                                        if (idDO.equals(typeDO)) {
-
-                                                            ArrayList<String> DAttributes = getDA(DataObjectTypes);
-
-                                                            for (int f = 0; f < DAttributes.size(); f++) {
-                                                                System.out.println("DA: " + DAttributes.get(f));
-                                                                JSONObject jsondataDAttribute = XML.toJSONObject(DAttributes.get(f));
-                                                                System.out.println("jsonDataAttribute: " + jsondataDAttribute);
-                                                                String nameDA = jsondataDAttribute.getJSONObject("DA").getString("name");
-
-                                                                pubTopic = iedName + "/" + logicalDeviceName + "/" + lnType + "." + nameDO + "." + nameDA;
-
-                                                                System.out.println("pubTopic dopo DataAttribute 2: " + pubTopic+"\n\n\n");
-                                                                MqttMessage messageDA = new MqttMessage(jsondataDAttribute.toString().getBytes());
-                                                                messageDA.setQos(qos);
-                                                                messageDA.setRetained(true);
-                                                                //sampleClient.publish(pubTopic, messageDA);
-                                                                topicDisponibili.add(pubTopic);
-
-
-                                                            }
-                                                            //JSONArray DA = jsondataDOTypes.getJSONObject("DOType").getJSONArray("DA");
-                                                            //System.out.println("DA: "+DA);
-                                                            //pubTopic = iedName + "\\" + logicalDeviceName + "\\"+lnType0+"."+nameDO;
-                                                            //System.out.println(pubTopic);
-                                                            //MqttMessage messageDOType = new MqttMessage(jsondataDOTypes.toString().getBytes());
-                                                            //messageDOType.setQos(qos);
-                                                            //messageDOType.setRetained(true);
-                                                            //sampleClient.publish(pubTopic, messageDOType);
-                                                            //System.out.println("DOTYPE PUBBLICATO SU TOPIC: "+pubTopic+"\n");
-
+                                                    if(doType.equals(idDOType)) {
+                                                        ArrayList<String> dataAttribute = getDA(dataObjectType);
+                                                        System.out.println(dataAttribute);
+                                                        for(int jj = 0; jj<dataAttribute.size(); jj++) {
+                                                            JSONObject jsonDA = XML.toJSONObject(dataAttribute.get(jj));
+                                                            String dataAttributeName = jsonDA.getJSONObject("DA").getString("name");
+                                                            pubTopic = iedName + "/" + logicalDeviceName + "/" + lnType+"."+doName+"."+dataAttributeName;
+                                                            topicDisponibili.add(pubTopic);
                                                         }
                                                     }
-
                                                 }
-
-
-
                                             }
-
-                                            /*LA TIPIZZAZIONE DI QUESTO NODO LOGICO VERRA' PUBBLICATA SU QUESTO TOPIC*/
-
                                         }
                                     }
-
                                 }
-
                             }
-                            /*fine altri nodi logici*/
-
                         }
-
                         for (int counter = 0; counter < topicDisponibili.size(); counter++) {
                             System.out.println(topicDisponibili.get(counter)+"\n");
                         }
-
                         break;
-
                     case READ_ALL_DATA_KEY:
                         System.out.print("Reading all data...");
                         try {
