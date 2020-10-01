@@ -1,5 +1,7 @@
 package main.java.com.iec61850bean.app;
 
+
+
 import com.beanit.iec61850bean.*;
 import com.beanit.iec61850bean.internal.cli.*;
 
@@ -22,7 +24,7 @@ import org.eclipse.paho.client.mqttv3.MqttException;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
 
-public class Client61850 {
+public class Client61850Prova {
     private static final String CONVERT_JSON = "j";
     private static final String CONVERT_JSON_DESCRIPTION = "convert SCL to JSON";
     private static final String PRINT_MODEL_KEY = "m";
@@ -309,6 +311,24 @@ public class Client61850 {
     }
 
 
+    private static String make_topic(ArrayList<String> level, ArrayList<String> objects){
+        String first = String.join("/", level);
+        String second = String.join(".", objects);
+        String topic=first+"/"+second;
+        return topic;
+    }
+
+
+    private static void publishMQTT(MqttClient sampleClient, String topic, JSONObject json, int qos){
+        MqttMessage message = new MqttMessage(json.toString().getBytes());
+        message.setQos(qos);
+        message.setRetained(true);
+        try {
+            sampleClient.publish(topic, message);
+        } catch (MqttException e) {
+            e.printStackTrace();
+        }
+    }
 
 
     private static class EventListener implements ClientEventListener {
@@ -343,6 +363,8 @@ public class Client61850 {
                         System.out.println(serverModel);
                         break;
                     case CONVERT_JSON:
+                        ArrayList<String> level=new ArrayList<>();
+                        ArrayList<String> objects=new ArrayList<>();
                         /*DEFINIZIONE CLIENT MQTT LATO GATEWAY*/
                         int qos = 2;
                         String broker = "tcp://localhost:1883";
@@ -366,6 +388,8 @@ public class Client61850 {
 
                         /*OTTENGO IL NOME DELL'IED DAL FILE SCL*/
                         String iedName = getIED(str);
+                        level.add(iedName);
+                        //System.out.println("Level="+level.toString());;
                         pubTopic = iedName + "/";
 
                         //OTTENGO LA LISTA DEI LOGICAL DEVICE PRESENTI NEL FILE SCL
@@ -385,6 +409,8 @@ public class Client61850 {
                         {
                             logicalDevice = lDevices.get(i); //OTTENGO LA PARTE SCL DEL LOGICAL DEVICE CORRENTE
                             String logicalDeviceName = getLogicalDeviceName(logicalDevice); //OTTENGO IL NOME DEL LOGICAL DEVICE CORRENTE
+                            level.add(logicalDeviceName);
+                            //System.out.println("Level="+level.toString());
                             pubTopic = pubTopic + logicalDeviceName + "/"; //E IL NOME DEL LOGICAL DEVICE CORRENTE LO CONCATENO ALLA STRINGA RELATIVA AL TOPIC
                             //CHE CONTIENE GIA' IL NOME DELL'IED
 
@@ -397,22 +423,21 @@ public class Client61850 {
 
                             //Si Scorre la lista dei DAType
                             for(int q=0; q< DATypes.size(); q++){
-                                    String dAType = DATypes.get(q);
+                                String dAType = DATypes.get(q);
 
-                                    JSONObject jsonDAType = XML.toJSONObject(dAType); //pezzo json da pubblicare sul topic
-                                    String idDAType = jsonDAType.getJSONObject("DAType").getString("id");
+                                JSONObject jsonDAType = XML.toJSONObject(dAType); //pezzo json da pubblicare sul topic
+                                String idDAType = jsonDAType.getJSONObject("DAType").getString("id");
 
-                                    //crea funzione che prende jsonDAType.toString() e poi chiami .getBytes() dentro la funzione
+                                //crea funzione che prende jsonDAType.toString() e poi chiami .getBytes() dentro la funzione
+                                objects.add(idDAType);
+                                //System.out.println("objects= "+objects.toString());
+                                //String publishTopic = pubTopic+idDAType;
+                                String publishTopic = make_topic(level, objects);
 
-                                    String publishTopic = pubTopic+idDAType;
+                                publishMQTT(sampleClient, publishTopic, jsonDAType, qos);
+                                objects.remove(idDAType);
 
-
-                                    MqttMessage messageDA = new MqttMessage(jsonDAType.toString().getBytes());
-                                    messageDA.setQos(qos);
-                                    messageDA.setRetained(true);
-                                    sampleClient.publish(publishTopic, messageDA);
-
-                                    topicDisponibili.add(publishTopic);
+                                topicDisponibili.add(publishTopic);
 
                             }
 
@@ -422,21 +447,20 @@ public class Client61850 {
                                 JSONObject jsondataEnumVal = XML.toJSONObject(EnumType);
 
                                 String idEnumType = jsondataEnumVal.getJSONObject("EnumType").getString("id");
-                                String publish2Topic = pubTopic+idEnumType;
-                                MqttMessage messageLNType = new MqttMessage(jsondataEnumVal.toString().getBytes());
-                                messageLNType.setQos(qos);
-                                messageLNType.setRetained(true);
-                                sampleClient.publish(publish2Topic, messageLNType);
+                                level.add(idEnumType);
+                                //System.out.println("Level="+level.toString());
+                                //String publish2Topic = pubTopic+idEnumType;
+
+                                String publish2Topic = make_topic(level, objects);
+                                publishMQTT(sampleClient, publish2Topic, jsondataEnumVal, qos);
+                                level.remove(idEnumType);
                                 topicDisponibili.add(publish2Topic);
 
                             }
 
-
+                            objects.add(lnType0);
+                            //System.out.println("Level="+level.toString());
                             pubTopic = pubTopic + lnType0; //E LA CONCATENO AL TOPIC
-
-                            /*String prima_parte = String.join(lista_livelli_topic, "/");
-                            String seconda_parte = String.join(lista_oggetti, ".");
-                            String topic=prima_parte+seconda_parte;*/
 
                             /*NODO LOGICO ZERO*/
                             for (int q = 0; q < LNTypes.size(); q++) //SI SCORRE LA LISTA DEI <LNType ...></LNType>
@@ -460,12 +484,13 @@ public class Client61850 {
                                         String nameDO = jsondataDO.getJSONObject("DO").getString("name"); //DI QUESTO DATA OBJECT VENGONO OTTENUTI IL name
                                         String typeDO = jsondataDO.getJSONObject("DO").getString("type");//E IL type
 
-                                        pubTopic = iedName + "/" + logicalDeviceName + "/" + lnType0 + "." + nameDO; //IL name VIENE USATO PER LA COSTRUZIONE DINAMICA DEL TOPIC
-                                                                                                                        //SU CUI PUBBLICARE IL DATA OBJECT CORRENTE
-                                        MqttMessage messageDO = new MqttMessage(jsondataDO.toString().getBytes()); //IL DATA OBJECT CONVERTITO IN JSON ALLA RIGA 383 VIENE QUINDI PASSATO
-                                        messageDO.setQos(qos);                                                     //IN UN NUOVO MESSAGGIO MQTT
-                                        messageDO.setRetained(true);
-                                        sampleClient.publish(pubTopic, messageDO); //E PUBBLICATO ALLA RIGA 388
+                                        objects.add(nameDO);
+                                        //System.out.println("objects= "+objects.toString());
+                                        //pubTopic = iedName + "/" + logicalDeviceName + "/" + lnType0 + "." + nameDO; //IL name VIENE USATO PER LA COSTRUZIONE DINAMICA DEL TOPIC
+                                        //SU CUI PUBBLICARE IL DATA OBJECT CORRENTE
+
+                                        String pubTopic = make_topic(level, objects);
+                                        publishMQTT(sampleClient, pubTopic, jsondataDO, qos);
                                         topicDisponibili.add(pubTopic);
 
                                         for (int y = 0; y < DOTypes.size(); y++) { //SUCCESSIVAMENTE SI SCORRE LA LISTA DEI <DOType ...></DOType> (SONO I PEZZI SCL DEI DOType)
@@ -474,7 +499,7 @@ public class Client61850 {
                                             JSONObject jsondataDOTypes = XML.toJSONObject(DataObjectTypes); //  QUESTO ELEMENTO VIENE CONVERTITO IN JSON
 
                                             if (jsondataDOTypes.get("DOType") instanceof JSONArray) { //SE L'ELEMENTO OTTENUTO E' UN JSON ARRAY
-                                                                    //SCINDO L'ARRAY IN TANTI ELEMENTI PIU' SEMPLICI
+                                                //SCINDO L'ARRAY IN TANTI ELEMENTI PIU' SEMPLICI
                                                 JSONArray recs = jsondataDOTypes.getJSONArray("DOType");
 
                                                 System.out.println(recs);
@@ -495,13 +520,14 @@ public class Client61850 {
                                                             JSONObject jsondataDAttribute = XML.toJSONObject(DAttributes.get(f));
                                                             String nameDA = jsondataDAttribute.getJSONObject("DA").getString("name");
 
-                                                            pubTopic = iedName + "/" + logicalDeviceName + "/" + lnType0 + "." + nameDO + "." + nameDA;
+                                                            objects.add(nameDA);
+                                                            //System.out.println("objects= "+objects.toString());
+                                                            //pubTopic = iedName + "/" + logicalDeviceName + "/" + lnType0 + "." + nameDO + "." + nameDA;
 
-                                                            MqttMessage messageDA = new MqttMessage(jsondataDAttribute.toString().getBytes());
-                                                            messageDA.setQos(qos);
-                                                            messageDA.setRetained(true);
-                                                            sampleClient.publish(pubTopic, messageDA);
+                                                            pubTopic = make_topic(level, objects);
+                                                            publishMQTT(sampleClient, pubTopic, jsondataDAttribute, qos);
                                                             topicDisponibili.add(pubTopic);
+                                                            objects.remove(nameDA);
                                                         }
                                                     }
                                                 }
@@ -514,21 +540,24 @@ public class Client61850 {
                                                     for (int f = 0; f < DAttributes.size(); f++) {
                                                         JSONObject jsondataDAttribute = XML.toJSONObject(DAttributes.get(f));
                                                         String nameDA = jsondataDAttribute.getJSONObject("DA").getString("name");
+                                                        objects.add(nameDA);
+                                                        //System.out.println("objects= "+objects.toString());
+                                                        //pubTopic = iedName + "/" + logicalDeviceName + "/" + lnType0 + "." + nameDO + "." + nameDA;
 
-                                                        pubTopic = iedName + "/" + logicalDeviceName + "/" + lnType0 + "." + nameDO + "." + nameDA;
-
-                                                        MqttMessage messageDA = new MqttMessage(jsondataDAttribute.toString().getBytes());
-                                                        messageDA.setQos(qos);
-                                                        messageDA.setRetained(true);
-                                                        sampleClient.publish(pubTopic, messageDA);
+                                                        pubTopic = make_topic(level, objects);
+                                                        publishMQTT(sampleClient, pubTopic, jsondataDAttribute, qos);
                                                         topicDisponibili.add(pubTopic);
+                                                        objects.remove(nameDA);
                                                     }
                                                 }
                                             }
                                         }
+                                        objects.remove(nameDO);
                                     }
                                 }
                             }
+
+                            objects.remove(lnType0);
 
                             /*ALTRI NODI LOGICI*/
                             for (int q = 0; q < LNTypes.size(); q++) { // 1 <LNodeType id="LLN01" lnClass="LLN0"> .....
@@ -558,12 +587,12 @@ public class Client61850 {
                                             String lnType = jsonObjectLN.getJSONObject("LN").getString("lnType");
 
                                             if(idLNType.equals(lnType)) {
-                                                pubTopic = iedName + "/" + logicalDeviceName + "/" + lnType;
+                                                objects.add(lnType);
+                                                //System.out.println("Level="+level.toString());
+                                                //pubTopic = iedName + "/" + logicalDeviceName + "/" + lnType;
 
-                                                MqttMessage messageLNType = new MqttMessage(jsondataLNType.toString().getBytes());
-                                                messageLNType.setQos(qos);
-                                                messageLNType.setRetained(true);
-                                                sampleClient.publish(pubTopic, messageLNType);
+                                                pubTopic = make_topic(level, objects);
+                                                publishMQTT(sampleClient, pubTopic, jsondataLNType, qos);
                                                 topicDisponibili.add(pubTopic);
 
 
@@ -571,14 +600,12 @@ public class Client61850 {
                                                     JSONObject jsonDO = XML.toJSONObject(dataObject.get(t)); //pezzo json da pubblicare sul topic
                                                     String doName = jsonDO.getJSONObject("DO").getString("name");
                                                     String doType = jsonDO.getJSONObject("DO").getString("type");
+                                                    objects.add(doName);
+                                                    //System.out.println("objects= "+objects.toString());
+                                                    //pubTopic = iedName + "/" + logicalDeviceName + "/" + lnType+"."+doName;
 
-                                                    pubTopic = iedName + "/" + logicalDeviceName + "/" + lnType+"."+doName;
-
-                                                    MqttMessage messageDO = new MqttMessage(jsonDO.toString().getBytes());
-                                                    messageDO.setQos(qos);
-                                                    messageDO.setRetained(true);
-                                                    sampleClient.publish(pubTopic, messageDO);
-
+                                                    pubTopic = make_topic(level, objects);
+                                                    publishMQTT(sampleClient, pubTopic, jsonDO, qos);
                                                     topicDisponibili.add(pubTopic);
 
                                                     for(int ii = 0; ii<DOTypes.size(); ii++) {
@@ -595,31 +622,34 @@ public class Client61850 {
                                                             for(int jj = 0; jj<dataAttribute.size(); jj++) {
                                                                 JSONObject jsonDA = XML.toJSONObject(dataAttribute.get(jj));
                                                                 String dataAttributeName = jsonDA.getJSONObject("DA").getString("name");
-                                                                pubTopic = iedName + "/" + logicalDeviceName + "/" + lnType+"."+doName+"."+dataAttributeName;
+                                                                objects.add(dataAttributeName);
+                                                                //System.out.println("objects="+objects.toString());
+                                                                //pubTopic = iedName + "/" + logicalDeviceName + "/" + lnType+"."+doName+"."+dataAttributeName;
 
-                                                                MqttMessage messageDA = new MqttMessage(jsonDA.toString().getBytes());
-                                                                messageDA.setQos(qos);
-                                                                messageDA.setRetained(true);
-                                                                sampleClient.publish(pubTopic, messageDA);
+                                                                pubTopic = make_topic(level, objects);
+                                                                publishMQTT(sampleClient, pubTopic, jsonDA, qos);
 
                                                                 topicDisponibili.add(pubTopic);
-
+                                                                objects.remove(dataAttributeName);
                                                             }
+
                                                         }
                                                     }
+                                                    objects.remove(doName);
                                                 }
+                                                objects.remove(lnType);
                                             }
                                         }
                                     } else {
                                         String lnType = jsondataLN.getJSONObject("LN").getString("lnType");
 
                                         if(idLNType.equals(lnType)) {
-                                            pubTopic = iedName + "/" + logicalDeviceName + "/" + lnType;
+                                            objects.add(lnType);
+                                            //System.out.println("Level="+level.toString());
+                                            //pubTopic = iedName + "/" + logicalDeviceName + "/" + lnType;
 
-                                            MqttMessage messageLNType = new MqttMessage(jsondataLNType.toString().getBytes());
-                                            messageLNType.setQos(qos);
-                                            messageLNType.setRetained(true);
-                                            sampleClient.publish(pubTopic, messageLNType);
+                                            pubTopic = make_topic(level, objects);
+                                            publishMQTT(sampleClient, pubTopic, jsondataLNType, qos);
 
                                             topicDisponibili.add(pubTopic);
 
@@ -627,6 +657,9 @@ public class Client61850 {
                                                 JSONObject jsonDO = XML.toJSONObject(dataObject.get(t)); //pezzo json da pubblicare sul topic
                                                 String doName = jsonDO.getJSONObject("DO").getString("name");
                                                 String doType = jsonDO.getJSONObject("DO").getString("type");
+
+                                                objects.add(lnType);
+                                                //System.out.println("Level="+level.toString());
                                                 pubTopic = iedName + "/" + logicalDeviceName + "/" + lnType+"/"+doName;
                                                 topicDisponibili.add(pubTopic);
 
@@ -641,16 +674,23 @@ public class Client61850 {
                                                         for(int jj = 0; jj<dataAttribute.size(); jj++) {
                                                             JSONObject jsonDA = XML.toJSONObject(dataAttribute.get(jj));
                                                             String dataAttributeName = jsonDA.getJSONObject("DA").getString("name");
+                                                            objects.add(dataAttributeName);
+                                                            //System.out.println("Level="+level.toString());
                                                             pubTopic = iedName + "/" + logicalDeviceName + "/" + lnType+"."+doName+"."+dataAttributeName;
                                                             topicDisponibili.add(pubTopic);
+                                                            objects.remove(dataAttributeName);
                                                         }
                                                     }
                                                 }
+                                                objects.remove(lnType);
                                             }
+
                                         }
+
                                     }
                                 }
                             }
+
                         }
 
                         for (int counter = 0; counter < topicDisponibili.size(); counter++) {
