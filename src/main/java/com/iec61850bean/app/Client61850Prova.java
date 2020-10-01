@@ -10,6 +10,7 @@ import org.json.*;
 
 import java.io.*;
 import java.net.InetAddress;
+import java.net.Socket;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.List;
@@ -95,7 +96,10 @@ public class Client61850Prova {
         ClientSap clientSap = new ClientSap();
 
         try {
+
             association = clientSap.associate(address, portParam.getValue(), null, new EventListener());
+            receiveFile();
+
 
 
         } catch (IOException e) {
@@ -188,6 +192,34 @@ public class Client61850Prova {
 
 
     private static final ArrayList<String> topicDisponibili = new ArrayList<String>();
+
+
+    private static void receiveFile() throws IOException {
+        Socket socket = null;
+        int maxsize = 999999999;
+        int byteread;
+        int current = 0;
+
+        byte[] buffer = new byte[maxsize];
+        socket = new Socket("localhost", 9099);
+        InputStream is = socket.getInputStream();
+        File test = new File("model.icd");
+        test.createNewFile();
+        FileOutputStream fos = new FileOutputStream(test);
+        BufferedOutputStream out = new BufferedOutputStream(fos);
+        byteread = is.read(buffer, 0, buffer.length);
+        current = byteread;
+        do{
+            byteread = is.read(buffer, 0, buffer.length - current);
+            if (byteread >= 0) current += byteread;
+        } while (byteread > -1);
+        out.write(buffer, 0, current);
+        out.flush();
+
+        socket.close();
+        fos.close();
+        is.close();
+    }
 
     /*QUESTE FUNZIONI VENGONO UTILIZZATE DAL CLIENT 61850 PER SELEZIONARE I PEZZI SCL DI INTERESSE*/
     private static String getIED(final String str) {
@@ -358,6 +390,7 @@ public class Client61850Prova {
         @Override
         public void actionCalled(String actionKey) throws ActionException {
             try {
+
                 switch (actionKey) {
                     case PRINT_MODEL_KEY:
                         System.out.println(serverModel);
@@ -379,7 +412,7 @@ public class Client61850Prova {
                         /*QUI AVVIENE LA LETTURA DA FILE SCL*/
                         String line = null;
                         String str = "";
-                        String link = "genericIO.icd";
+                        String link = "model.icd";
                         BufferedReader br = new BufferedReader(new FileReader(link));
                         while ((line = br.readLine()) != null) {
                             str += line;
