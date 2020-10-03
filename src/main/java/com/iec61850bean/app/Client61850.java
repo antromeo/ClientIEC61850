@@ -98,7 +98,7 @@ public class Client61850 {
         try {
 
             association = clientSap.associate(address, portParam.getValue(), null, new EventListener());
-            receiveFile("localhost", 9099, "model.icd");
+            //receiveFile("localhost", 9099, "model.icd");
 
 
 
@@ -415,7 +415,7 @@ public class Client61850 {
                         /*QUI AVVIENE LA LETTURA DA FILE SCL*/
                         String line = null;
                         String str = "";
-                        String link = "model.icd";
+                        String link = "test/inverter3ph.icd";
                         BufferedReader br = new BufferedReader(new FileReader(link));
                         while ((line = br.readLine()) != null) {
                             str += line;
@@ -557,7 +557,7 @@ public class Client61850 {
 
                                                         //System.out.println("jsondataDAttribute="+jsondataDAttribute);
 
-                                                        //System.out.println("DAType="+DAType);
+                                                        System.out.println("DAType="+DAType);
                                                         if(DAType.equals("Enum")){
                                                             ArrayList<String> DATypeEnum = getEnumTypes(dataTypeTemplates);
                                                             //System.out.println("DATypeEnum="+DATypeEnum);

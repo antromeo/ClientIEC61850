@@ -103,7 +103,6 @@ public class PatternAnalyzer {
 
     public ArrayList<String> getDOTypes(String str) {
         final ArrayList<String> tagValues = new ArrayList<String>();
-        str=convertSelfClosedTag(str);
         final Matcher matcher = TAG_REGEX_DOTYPES.matcher(str);
         while (matcher.find()) {
             tagValues.add("<DOType" + matcher.group(1) + "</DOType>");
@@ -111,15 +110,15 @@ public class PatternAnalyzer {
         return tagValues;
     }
 
-    public String convertSelfClosedTag(final String str){
+    public String convertSelfClosedTag(String str){
         Pattern patt = Pattern.compile("(<DOType[^>]*)(\\s*/>)");
         Matcher mattcher = patt.matcher(str);
-        String result = "";
+
         while (mattcher.find()){
-            result = mattcher.replaceAll("$1></DOType>");
+            str = mattcher.replaceAll("$1></DOType>");
             //System.out.println(result);
         }
-        return result;
+        return str;
     }
 
     public ArrayList<String> getDA(final String str) {
