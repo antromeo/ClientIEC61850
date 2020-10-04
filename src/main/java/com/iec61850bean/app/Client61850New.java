@@ -291,7 +291,7 @@ public class Client61850New {
                         sampleClient.connect(connOpts);
                         /*FINE DEFINIZIONE CLIENT MQTT*/
 
-                        String str=sclToString("test/complexModel.icd");
+                        String str=sclToString("test/genericIO.icd");
                         str=analyzer.convertSelfClosedTag(str);
                         //System.out.println(str);
 
@@ -378,6 +378,16 @@ public class Client61850New {
                                             String idDO = jsondataDOTypes.getJSONObject("DOType").getString("id");
                                             //System.out.println(idDO);
                                             if (idDO.equals(typeDO)) { //e verifico l'uguaglianza
+                                                //PUBLISH DEL DOType
+                                                objects.add(typeDO);
+                                                pubTopic=make_topic(level, objects);
+                                                //System.out.println("PubTopic="+pubTopic);
+                                                JSONObject jsonDOType=XML.toJSONObject(DataObjectTypes);
+                                                publishMQTT(sampleClient, pubTopic,jsonDOType, qos);
+                                                topicDisponibili.add(pubTopic);
+                                                objects.remove(typeDO);
+
+
                                                 ArrayList<String> DAttributes = analyzer.getDA(DataObjectTypes);
                                                 for (int f = 0; f < DAttributes.size(); f++) {
                                                     JSONObject jsondataDAttribute = XML.toJSONObject(DAttributes.get(f));
@@ -511,6 +521,15 @@ public class Client61850New {
 
 
                                                         if(doType.equals(idDOType)) {
+                                                            //PUBLISH DEL DOType
+                                                            objects.add(idDOType);
+                                                            pubTopic=make_topic(level, objects);
+                                                            //System.out.println("PubTopic="+pubTopic);
+                                                            publishMQTT(sampleClient, pubTopic,jsonDOType, qos);
+                                                            topicDisponibili.add(pubTopic);
+                                                            objects.remove(idDOType);
+
+
                                                             ArrayList<String> dataAttribute = analyzer.getDA(dataObjectType);
 
                                                             for(int jj = 0; jj<dataAttribute.size(); jj++) {
