@@ -113,10 +113,8 @@ public class PatternAnalyzer {
     public String convertSelfClosedTag(String str){
         Pattern patt = Pattern.compile("(<DOType[^>]*)(\\s*/>)");
         Matcher mattcher = patt.matcher(str);
-
         while (mattcher.find()){
             str = mattcher.replaceAll("$1></DOType>");
-            //System.out.println(result);
         }
         return str;
     }

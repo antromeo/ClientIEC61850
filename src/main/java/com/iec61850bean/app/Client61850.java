@@ -40,6 +40,7 @@ public class Client61850 {
     private static final String DELETE_DATA_SET_KEY_DESCRIPTION = "delete data set";
     private static final String REPORTING_KEY = "r";
     private static final String REPORTING_KEY_DESCRIPTION = "configure reporting";
+    private static final int MAX_SIZE=999999999;
 
     private static final StringCliParameter hostParam =
             new CliParameterBuilder("-h")
@@ -96,9 +97,12 @@ public class Client61850 {
         ClientSap clientSap = new ClientSap();
 
         try {
+            int port=9099;
+            String file_name="model.icd";
+
 
             association = clientSap.associate(address, portParam.getValue(), null, new EventListener());
-            //receiveFile("localhost", 9099, "model.icd");
+            receiveFile(hostParam.getValue(), port, file_name);
 
 
 
@@ -177,16 +181,15 @@ public class Client61850 {
 
     private static void receiveFile(String host, int port, String name_file) throws IOException {
         Socket socket = null;
-        int maxsize = 999999999;
         int byteread;
         int current = 0;
 
-        byte[] buffer = new byte[maxsize];
+        byte[] buffer = new byte[MAX_SIZE];
         socket = new Socket(host, port);
         InputStream is = socket.getInputStream();
-        File test = new File(name_file);
-        test.createNewFile();
-        FileOutputStream fos = new FileOutputStream(test);
+        File file = new File(name_file);
+        file.createNewFile();
+        FileOutputStream fos = new FileOutputStream(file);
         BufferedOutputStream out = new BufferedOutputStream(fos);
         byteread = is.read(buffer, 0, buffer.length);
         current = byteread;
@@ -203,9 +206,9 @@ public class Client61850 {
     }
 
 
-    private static String make_topic(ArrayList<String> level, ArrayList<String> objects){
-        String first = String.join("/", level);
-        String second = String.join(".", objects);
+    private static String make_topic(ArrayList<String> first_level, ArrayList<String> second_level){
+        String first = String.join("/", first_level);
+        String second = String.join(".", second_level);
         String topic=first+"/"+second;
         return topic;
     }
@@ -217,8 +220,19 @@ public class Client61850 {
         message.setRetained(true);
         try {
             sampleClient.publish(topic, message);
-            //System.out.println("topic="+topic);
-            //System.out.println("descrizione="+message);
+            //System.out.println("topic="+topic+"\n");
+            //System.out.println("descrizione="+message+"\n");
+        } catch (MqttException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private static void  publishJSONArrayMQTT(MqttClient sampleClient, String topic, JSONArray json, int qos){
+        MqttMessage message = new MqttMessage(json.toString().getBytes());
+        message.setQos(qos);
+        message.setRetained(true);
+        try {
+            sampleClient.publish(topic, message);
         } catch (MqttException e) {
             e.printStackTrace();
         }
@@ -246,7 +260,6 @@ public class Client61850 {
     }
 
     private static class EventListener implements ClientEventListener {
-
         @Override
         public void newReport(Report report) {
             System.out.println("\n----------------");
@@ -291,7 +304,7 @@ public class Client61850 {
                         sampleClient.connect(connOpts);
                         /*FINE DEFINIZIONE CLIENT MQTT*/
 
-                        String str=sclToString("test/genericIO.icd");
+                        String str=sclToString("model.icd");
                         str=analyzer.convertSelfClosedTag(str);
                         //System.out.println(str);
 
@@ -343,10 +356,12 @@ public class Client61850 {
                                 JSONObject jsondataLNType = XML.toJSONObject(LNodeType); //L'ELEMENTO OTTENUTO VIENE CONVERTITO IN JSON
                                 String id = jsondataLNType.getJSONObject("LNodeType").getString("id"); //E DI QUESTO ELEMENTO JSON SI OTTIENE L'ID (ESEMPIO: <LNodeType id="LLN01"...>)
                                 if (id.equals(lnType0)) { //SE L'UGUAGLIANZA E' VERIFICATA, OSSIA SE LNodeType id="LLN01" == lnType0 (vedi riga 363)
-                                    MqttMessage messageLNType = new MqttMessage(jsondataLNType.toString().getBytes()); //VIENE CREATO UN NUOVO MESSAGGIO MQTT CHE PRENDE IN INGRESSO
-                                    messageLNType.setQos(qos);   //VIENE SETTATA LA QOS (IN QUESTO CASO 2)             //L'OGGETTO JSON DELLA RIGA 370 IN FORMATO STRINGA (LO PRENDE SOLO COSì)
-                                    messageLNType.setRetained(true); //VIENE SETTATO A RETAIN IN MODO CHE IL CLIENT MQTT ESTERNO POSSA OTTENERE I VALORI DI INTERESSE ANCHE SI CONNETTE IN UN SECONDO MOMENTO
-                                    sampleClient.publish(pubTopic, messageLNType); //E QUINDI LA TIPIZZAZIONE DI QUEL NODO VIENE PUBBLICATA SUL TOPIC DELLA RIGA 364
+                                    //MqttMessage messageLNType = new MqttMessage(jsondataLNType.toString().getBytes()); //VIENE CREATO UN NUOVO MESSAGGIO MQTT CHE PRENDE IN INGRESSO
+                                    //messageLNType.setQos(qos);   //VIENE SETTATA LA QOS (IN QUESTO CASO 2)             //L'OGGETTO JSON DELLA RIGA 370 IN FORMATO STRINGA (LO PRENDE SOLO COSì)
+                                    //messageLNType.setRetained(true); //VIENE SETTATO A RETAIN IN MODO CHE IL CLIENT MQTT ESTERNO POSSA OTTENERE I VALORI DI INTERESSE ANCHE SI CONNETTE IN UN SECONDO MOMENTO
+                                    //sampleClient.publish(pubTopic, messageLNType); //E QUINDI LA TIPIZZAZIONE DI QUEL NODO VIENE PUBBLICATA SUL TOPIC DELLA RIGA 364
+
+                                    publishMQTT(sampleClient, pubTopic, jsondataLNType, qos);
                                     topicDisponibili.add(pubTopic);
 
                                     //QUINDI SI PASSA AI DATA OBJECT
@@ -674,6 +689,11 @@ public class Client61850 {
                             }
 
                         }
+
+                        String discovery_topic=iedName+"/GetTopics";
+                        JSONArray json_array=new JSONArray(topicDisponibili);
+                        publishJSONArrayMQTT(sampleClient, discovery_topic, json_array, qos);
+                        topicDisponibili.add(discovery_topic);
                         print_topics(topicDisponibili);
 
 
